@@ -12,8 +12,8 @@ using warehouse.Data;
 namespace warehouse.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20251024024056_IntMigration")]
-    partial class IntMigration
+    [Migration("20251024082506_CreateInit")]
+    partial class CreateInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -478,6 +478,51 @@ namespace warehouse.Migrations
                     b.ToTable("PromotionProducts");
                 });
 
+            modelBuilder.Entity("warehouse.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            RoleName = "Admin",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            RoleName = "Employee",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            RoleName = "Customer",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
             modelBuilder.Entity("warehouse.Models.StockTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -736,6 +781,9 @@ namespace warehouse.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -762,39 +810,44 @@ namespace warehouse.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
-                });
 
-            modelBuilder.Entity("warehouse.Models.UserRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("UserRoles");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Dob = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@warehouse.com",
+                            IsActive = false,
+                            Name = "System Admin",
+                            Password = "$2a$11$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36/FHZ0cH0YkL/.oxlWZ92a",
+                            RoleId = 1,
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Dob = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "employee@warehouse.com",
+                            IsActive = false,
+                            Name = "John Employee",
+                            Password = "$2a$11$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36/FHZ0cH0YkL/.oxlWZ92a",
+                            RoleId = 2,
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Dob = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "customer@warehouse.com",
+                            IsActive = false,
+                            Name = "Jane Customer",
+                            Password = "$2a$11$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36/FHZ0cH0YkL/.oxlWZ92a",
+                            RoleId = 3,
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
                 });
 
             modelBuilder.Entity("warehouse.Models.Wallet", b =>
@@ -1073,22 +1126,13 @@ namespace warehouse.Migrations
 
             modelBuilder.Entity("warehouse.Models.User", b =>
                 {
-                    b.HasOne("warehouse.Models.UserRole", "Role")
-                        .WithMany("Users")
+                    b.HasOne("warehouse.Models.Role", "Role")
+                        .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("warehouse.Models.UserRole", b =>
-                {
-                    b.HasOne("warehouse.Models.User", null)
-                        .WithOne()
-                        .HasForeignKey("warehouse.Models.UserRole", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("warehouse.Models.Wallet", b =>
@@ -1140,11 +1184,6 @@ namespace warehouse.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("StoreUsers");
-                });
-
-            modelBuilder.Entity("warehouse.Models.UserRole", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
