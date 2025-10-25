@@ -3,9 +3,13 @@ bin/
 obj/
 out/
 
-# VS Code settings
+# Publish folder
+publish/
+
+# Rider / VS Code / Visual Studio settings
 .vscode/
 .vs/
+.idea/
 .history
 
 # User-specific files
@@ -14,36 +18,28 @@ out/
 *.userosscache
 *.sln.docstates
 
-# Rider settings
-.idea/
-
-# NuGet
+# NuGet packages
 *.nupkg
 packages/
 .nuget/
 *.snupkg
 
-# ASP.NET
+# ASP.NET / .NET Core
 *.log
 appsettings.Development.json
-
-# Visual Studio cache files
-*.cache
-*.ilk
-*.pdb
-*.idb
 
 # Dotnet temporary files
 *.dotCover
 *.dotMemory
+*.cache
+*.pdb
+*.ilk
+*.idb
 
 # Test result files
 TestResults/
 *.trx
 *.coverage
-
-# Publish folder
-publish/
 
 # Others
 *.DS_Store
