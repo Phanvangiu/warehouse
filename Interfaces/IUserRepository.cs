@@ -8,6 +8,7 @@ using warehouse.Data;
 using warehouse.Models;
 using warehouse.RequestModels;
 using warehouse.ReturnModels;
+using warehouse.Services;
 
 namespace warehouse.Interfaces
 {
@@ -21,6 +22,8 @@ namespace warehouse.Interfaces
     Task<User> ManagerAuthenticate(RequestLogin account);
     Task<CustomResult> AdminLogin(RequestLogin account);
     Task<bool> CheckEmailExist(string email);
+    Task<bool> CheckPhoneExist(string phone);
+    Task<CustomResult> CreateCustomer(CreateCustomerModel account);
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
   {
@@ -28,12 +31,14 @@ namespace warehouse.Interfaces
     private readonly ILogger<UserRepository> _logger;
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;
+    private readonly IMailService _mailService;
     // private readonly IMailService _mailService;
-    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env) : base(dataContext)
+    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService) : base(dataContext)
     {
       _logger = logger;
       _config = configuration;
       _env = env;
+      _mailService = mailService;
       // _mailService = mailService;
     }
     public void CreateOwner(User owner)
@@ -135,7 +140,59 @@ namespace warehouse.Interfaces
       }
       return true;
     }
+    public async Task<bool> CheckPhoneExist(string phone)
+    {
+      var verified = await _context.Users.SingleOrDefaultAsync(u => u.Phone == phone);
+      if (verified == null)
+      {
+        return false;
+      }
+      return true;
+    }
+    public async Task<CustomResult> CreateCustomer(CreateCustomerModel account)
+    {
+      var verifiedEmail = await CheckEmailExist(account.Email);
 
+      if (verifiedEmail == true)
+      {
+        return new CustomResult(400, "Email already exist", null);
+      }
+
+      var verifiedPhone = await CheckPhoneExist(account.Phone);
+
+      if (verifiedPhone == true)
+      {
+        return new CustomResult(400, "Phone number already exist", null);
+      }
+      var customerRole = await _context.Roles.SingleOrDefaultAsync(ur => ur.RoleName == "Customer");
+      var customer = new User()
+      {
+        Email = account.Email,
+        Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
+        IsActive = true,
+        Phone = account.Phone,
+        Name = account.Name,
+        Role = customerRole,
+        RoleId = customerRole.Id
+      };
+      _context.Users.Add(customer);
+      await _context.SaveChangesAsync();
+      var token = CreateToken(customer);
+      _ = _mailService.SendMail(new MailRequest(customer.Email, "Verify Email",
+                  $"<h1>Thank you for registering</h1>" +
+                         $"<p>Please verify your email by clicking the following link: </p>" +
+                         $"<h1>{token}</h1>"
+                         //  $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
+                         ))
+              .ContinueWith(t =>
+              {
+                if (t.IsFaulted)
+                {
+                  _logger.LogError(t.Exception, "Some Exception in Test");
+                }
+              });
+      return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
+    }
   }
 }
 

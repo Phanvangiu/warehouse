@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
 using warehouse.RequestModels;
@@ -39,6 +40,12 @@ namespace warehouse.Controllers
       await _mailService.SendEmailAsync(request);
       return Ok("Mail sent successfully!");
     }
-
+    [HttpPost]
+    [Route("register-customer")]
+    public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerModel customerModel)
+    {
+      var customResult = await _unitOfWork.UserRepository.CreateCustomer(customerModel);
+      return Ok(customResult);
+    }
   }
 }

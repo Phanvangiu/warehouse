@@ -6,7 +6,7 @@ namespace warehouse.Interfaces
   public interface IUnitOfWork : IDisposable
   {
     IUserRepository UserRepository { get; }
-    void SaveChanges();
+    Task SaveChangesAsync();
   }
   public class UnitOfWork : IUnitOfWork
   {
@@ -22,9 +22,9 @@ namespace warehouse.Interfaces
       _dataContext.Dispose();
     }
 
-    public void SaveChanges()
+    public async Task SaveChangesAsync()
     {
-      _dataContext.SaveChanges();
+      await _dataContext.SaveChangesAsync();
     }
   }
 }
