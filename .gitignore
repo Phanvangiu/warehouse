@@ -1,0 +1,52 @@
+# Build outputs
+bin/
+obj/
+out/
+
+# VS Code settings
+.vscode/
+.vs/
+.history
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider settings
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+*.snupkg
+
+# ASP.NET
+*.log
+appsettings.Development.json
+
+# Visual Studio cache files
+*.cache
+*.ilk
+*.pdb
+*.idb
+
+# Dotnet temporary files
+*.dotCover
+*.dotMemory
+
+# Test result files
+TestResults/
+*.trx
+*.coverage
+
+# Publish folder
+publish/
+
+# Others
+*.DS_Store
+*.bak
+*.swp
+*.tmp
