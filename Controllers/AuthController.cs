@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
@@ -45,6 +46,21 @@ namespace warehouse.Controllers
     public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerModel customerModel)
     {
       var customResult = await _unitOfWork.UserRepository.CreateCustomer(customerModel);
+      return Ok(customResult);
+    }
+    [HttpPost]
+    [Route("create-employee")]
+    public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployee employeeModel)
+    {
+      var customResult = await _unitOfWork.UserRepository.CreateEmployee(employeeModel);
+      return Ok(customResult);
+    }
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [Route("get-all-customer")]
+    public async Task<IActionResult> GetAllCustomer()
+    {
+      var customResult = await _unitOfWork.UserRepository.GetAllCustomer();
       return Ok(customResult);
     }
   }

@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks.Dataflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using warehouse.Data;
@@ -24,6 +23,8 @@ namespace warehouse.Interfaces
     Task<bool> CheckEmailExist(string email);
     Task<bool> CheckPhoneExist(string phone);
     Task<CustomResult> CreateCustomer(CreateCustomerModel account);
+    Task<CustomResult> CreateEmployee(CreateEmployee account);
+    Task<CustomResult> GetAllCustomer();
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
   {
@@ -62,33 +63,21 @@ namespace warehouse.Interfaces
 
 
 
-    public async Task<User> GetUserByIdAsync(int ownerId)
+    public async Task<User?> GetUserByIdAsync(int ownerId)
     {
       return await _context.Users.FindAsync(ownerId);
     }
     public async Task<User> ManagerAuthenticate(RequestLogin account)
     {
-      Console.WriteLine($"Login attempt for email: {account.Email}");
-      Console.WriteLine($"Login attempt for email: {account.Password}");
-      string hash = BCrypt.Net.BCrypt.HashPassword(account.Password, 12);
-
       var verified = await _context.Users.Include(u => u.Role)
       .Where(u => u.Email == account.Email && (u.RoleId == 1 || u.RoleId == 2)).SingleOrDefaultAsync();
-
-
       if (verified != null)
       {
-        // Console.WriteLine($"account.Password: {account.Password}");
-        // Console.WriteLine($"verified.Password: {verified.Password}");
-        // Console.WriteLine($"Checkpasss: {BCrypt.Net.BCrypt.Verify(account.Password, verified.Password)}");
-        // Console.WriteLine($"hashpass: {hash}");
         if (BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
         {
           return verified;
         }
-
       }
-
       return null;
     }
     public async Task<CustomResult> AdminLogin(RequestLogin account)
@@ -133,6 +122,10 @@ namespace warehouse.Interfaces
     }
     public async Task<bool> CheckEmailExist(string email)
     {
+      if (email == "")
+      {
+        return true;
+      }
       var verified = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
       if (verified == null)
       {
@@ -193,6 +186,36 @@ namespace warehouse.Interfaces
               });
       return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
     }
+    public async Task<CustomResult> CreateEmployee(CreateEmployee account)
+    {
+      var verifiedEmail = await CheckEmailExist(account.Email);
+
+      if (verifiedEmail == true)
+      {
+        return new CustomResult(400, "Email already exist", null);
+      }
+      if (account.Phone != null)
+      {
+        var verifiedPhone = await CheckPhoneExist(account.Phone);
+
+        if (verifiedPhone == true)
+        {
+          return new CustomResult(400, "Phone number already exist", null);
+        }
+      }
+      return new CustomResult(200, "jdtgh", null);
+    }
+
+    public async Task<CustomResult> GetAllCustomer()
+    {
+      var customer = await _context.Users.Where(u => u.Role.RoleName == "Customer").ToListAsync();
+      if (customer == null)
+      {
+        return new CustomResult(200, "Not found", null);
+      }
+      return new CustomResult(200, "List of customers", customer);
+    }
+
   }
 }
 
