@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using warehouse.Data;
@@ -25,6 +26,9 @@ namespace warehouse.Interfaces
     Task<CustomResult> CreateCustomer(CreateCustomerModel account);
     Task<CustomResult> CreateEmployee(CreateEmployee account);
     Task<CustomResult> GetAllCustomer();
+    Task<CustomResult> GetAllEmployee();
+    Task<CustomResult> GetUser(string email);
+
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
   {
@@ -214,6 +218,24 @@ namespace warehouse.Interfaces
         return new CustomResult(200, "Not found", null);
       }
       return new CustomResult(200, "List of customers", customer);
+    }
+    public async Task<CustomResult> GetAllEmployee()
+    {
+      var employees = await _context.Users.Where(u => u.Role.RoleName == "Employee").ToListAsync();
+      if (employees == null)
+      {
+        return new CustomResult(200, "Not found", null);
+      }
+      return new CustomResult(200, "List of customers", employees);
+    }
+    public async Task<CustomResult> GetUser(string email)
+    {
+      if (email == "")
+      {
+        return new CustomResult(404, "find not found ", null);
+      }
+      var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+      return new CustomResult(200, "user", user);
     }
 
   }
