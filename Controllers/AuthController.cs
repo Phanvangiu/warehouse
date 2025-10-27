@@ -50,40 +50,13 @@ namespace warehouse.Controllers
       return Ok(customResult);
     }
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [Route("create-employee")]
     public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployee employeeModel)
     {
       var customResult = await _unitOfWork.UserRepository.CreateEmployee(employeeModel);
       return Ok(customResult);
     }
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    [Route("get-all-customer")]
-    public async Task<IActionResult> GetAllCustomer()
-    {
-      var customResult = await _unitOfWork.UserRepository.GetAllCustomer();
-      return Ok(customResult);
-    }
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    [Route("get-all-employee")]
-    public async Task<IActionResult> GetAllEmployee()
-    {
-      var customResult = await _unitOfWork.UserRepository.GetAllEmployee();
-      return Ok(customResult);
-    }
-    [HttpGet]
-    [Route("get-user")]
-    public async Task<IActionResult> GetUser()
-    {
-      var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-      if (string.IsNullOrEmpty(email))
-      {
-        return Ok(new CustomResult(401, "Invalid token or email not found in claims", null));
-      }
-      var customResult = await _unitOfWork.UserRepository.GetUser(email);
-      return Ok(customResult);
-    }
   }
 }
