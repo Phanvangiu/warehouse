@@ -29,13 +29,6 @@ namespace warehouse.Controllers
       var customResult = await _unitOfWork.UserRepository.GetAllEmployee();
       return Ok(customResult);
     }
-    [HttpPost]
-    [Authorize(Roles = "Admin")]
-    [Route("create-employee")]
-    public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployee employeeModel)
-    {
-      var customResult = await _unitOfWork.UserRepository.CreateEmployee(employeeModel);
-      return Ok(customResult);
-    }
+
   }
 }

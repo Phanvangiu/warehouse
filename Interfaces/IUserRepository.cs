@@ -28,6 +28,8 @@ namespace warehouse.Interfaces
     Task<CustomResult> GetAllCustomer();
     Task<CustomResult> GetAllEmployee();
     Task<CustomResult> GetUser(string email);
+    Task<CustomResult> ChangePassword(int userId, ChangePasswordModel changePasswordRequest);
+
 
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
@@ -236,6 +238,24 @@ namespace warehouse.Interfaces
       }
       var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
       return new CustomResult(200, "user", user);
+    }
+    public async Task<CustomResult> ChangePassword(int userId, ChangePasswordModel model)
+    {
+      var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+      if (user == null)
+        return new CustomResult(404, "User not found", null);
+
+      if (!BCrypt.Net.BCrypt.Verify(model.PreviousPassword, user.Password))
+        return new CustomResult(400, "Wrong password", null);
+
+      if (BCrypt.Net.BCrypt.Verify(model.NewPassword, user.Password))
+        return new CustomResult(400, "New password cannot be same as old password", null);
+
+      user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+      _context.Users.Update(user);
+      await _context.SaveChangesAsync();
+
+      return new CustomResult(200, "Password changed successfully", null);
     }
 
   }

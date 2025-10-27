@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
+using warehouse.RequestModels;
 using warehouse.ReturnModels;
 
 namespace warehouse.Controllers
@@ -25,6 +27,24 @@ namespace warehouse.Controllers
         return Ok(new CustomResult(401, "Invalid token or email not found in claims", null));
       }
       var customResult = await _unitOfWork.UserRepository.GetUser(email);
+      return Ok(customResult);
+    }
+    [HttpPut]
+    [Route("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordModel changePasswordModel)
+    {
+      int userId;
+      string idClaim;
+      idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+      if (idClaim == null)
+      {
+        return Ok(new CustomResult(401, "Invalid token in claims", null));
+      }
+      int.TryParse(idClaim, out userId);
+
+      var customResult = await _unitOfWork.UserRepository.ChangePassword(userId, changePasswordModel);
+
       return Ok(customResult);
     }
   }
