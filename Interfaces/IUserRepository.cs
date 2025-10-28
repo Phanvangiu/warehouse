@@ -29,7 +29,8 @@ namespace warehouse.Interfaces
     Task<CustomResult> GetAllEmployee();
     Task<CustomResult> GetUser(string email);
     Task<CustomResult> ChangePassword(int userId, ChangePasswordModel changePasswordRequest);
-
+    Task<CustomResult> ActivateEmployee(int userId);
+    Task<CustomResult> DeactivateEmployee(int userId);
 
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
@@ -69,7 +70,7 @@ namespace warehouse.Interfaces
 
 
 
-    public async Task<User?> GetUserByIdAsync(int ownerId)
+    public async Task<User> GetUserByIdAsync(int ownerId)
     {
       return await _context.Users.FindAsync(ownerId);
     }
@@ -257,7 +258,27 @@ namespace warehouse.Interfaces
 
       return new CustomResult(200, "Password changed successfully", null);
     }
+    public async Task<CustomResult> ActivateEmployee(int userId)
+    {
+      var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+      if (employee == null)
+      { return new CustomResult(404, "User not found", null); }
+      employee.IsActive = true;
+      _context.Users.Update(employee);
+      await _context.SaveChangesAsync();
+      return new CustomResult(200, "Success", employee);
 
+    }
+    public async Task<CustomResult> DeactivateEmployee(int userId)
+    {
+      var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+      if (employee == null)
+      { return new CustomResult(404, "User not found", null); }
+      employee.IsActive = false;
+      _context.Users.Update(employee);
+      await _context.SaveChangesAsync();
+      return new CustomResult(200, "Success", employee);
+    }
   }
 }
 

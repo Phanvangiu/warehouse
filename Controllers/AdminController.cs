@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
 using warehouse.RequestModels;
+using warehouse.ReturnModels;
 
 namespace warehouse.Controllers
 {
@@ -29,6 +30,29 @@ namespace warehouse.Controllers
       var customResult = await _unitOfWork.UserRepository.GetAllEmployee();
       return Ok(customResult);
     }
-
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    [Route("create-employee")]
+    public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployee employeeModel)
+    {
+      var customResult = await _unitOfWork.UserRepository.CreateEmployee(employeeModel);
+      return Ok(customResult);
+    }
+    [HttpPut]
+    [Authorize(Roles = "Admin")]
+    [Route("active-employee")]
+    public async Task<IActionResult> ActiveEmployee([FromForm] int employeeId)
+    {
+      var customResult = await _unitOfWork.UserRepository.ActivateEmployee(employeeId);
+      return Ok(customResult);
+    }
+    [HttpPut]
+    [Authorize(Roles = "Admin")]
+    [Route("deactive-employee")]
+    public async Task<IActionResult> DeActiveEmployee([FromForm] int employeeId)
+    {
+      var customResult = await _unitOfWork.UserRepository.DeactivateEmployee(employeeId);
+      return Ok(customResult);
+    }
   }
 }
