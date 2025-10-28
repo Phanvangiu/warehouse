@@ -31,6 +31,7 @@ namespace warehouse.Interfaces
     Task<CustomResult> ChangePassword(int userId, ChangePasswordModel changePasswordRequest);
     Task<CustomResult> ActivateEmployee(int userId);
     Task<CustomResult> DeactivateEmployee(int userId);
+    Task<CustomResult> ChangeUserImage(string email, IFormFile image);
 
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
@@ -40,14 +41,14 @@ namespace warehouse.Interfaces
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;
     private readonly IMailService _mailService;
-    // private readonly IMailService _mailService;
-    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService) : base(dataContext)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService, IHttpContextAccessor httpContextAccessor) : base(dataContext)
     {
       _logger = logger;
       _config = configuration;
       _env = env;
       _mailService = mailService;
-      // _mailService = mailService;
+      _httpContextAccessor = httpContextAccessor;
     }
     public void CreateOwner(User owner)
     {
@@ -279,6 +280,55 @@ namespace warehouse.Interfaces
       await _context.SaveChangesAsync();
       return new CustomResult(200, "Success", employee);
     }
+    public async Task<CustomResult> ChangeUserImage(string email, IFormFile image)
+    {
+      try
+      {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+          return new CustomResult(404, "User not found", null);
+        if (_env.WebRootPath == null)
+          _env.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        var folderName = "avatars";
+
+        var fileName = DateTime.Now.Ticks + Path.GetFileName(image.FileName);
+        var uploadPath = Path.Combine(_env.WebRootPath, "images", folderName);
+
+        if (!Directory.Exists(uploadPath))
+          Directory.CreateDirectory(uploadPath);
+
+        var filePath = Path.Combine(uploadPath, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+          await image.CopyToAsync(stream);
+        }
+
+        user.Avatar = $"{folderName}/{fileName}";
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+        var imageUrl = string.Empty;
+        if (_httpContextAccessor.HttpContext != null)
+        {
+          var request = _httpContextAccessor.HttpContext.Request;
+          imageUrl = $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}";
+        }
+        else
+        {
+          imageUrl = $"/images/{folderName}/{fileName}";
+        }
+        user.Avatar = imageUrl;
+
+        return new CustomResult(200, "Success", user);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(400, "Failed", ex.Message);
+      }
+    }
+
+
   }
 }
 

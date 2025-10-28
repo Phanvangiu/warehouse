@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
+using warehouse.Models;
 using warehouse.RequestModels;
 using warehouse.ReturnModels;
 
@@ -47,5 +48,22 @@ namespace warehouse.Controllers
 
       return Ok(customResult);
     }
+
+    [HttpPut("change-avatar")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> ChangeUserAvatar([FromForm] ChangeAvatarModel request)
+    {
+      var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+      if (string.IsNullOrEmpty(email))
+      {
+        return Ok(new CustomResult(404, "Please login before updating avatar", null));
+      }
+
+      var customResult = await _unitOfWork.UserRepository.ChangeUserImage(email, request.Image);
+      return Ok(customResult);
+    }
+
   }
 }
