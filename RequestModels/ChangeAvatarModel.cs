@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
 
-namespace warehouse.Models
+namespace warehouse.RequestModels
 {
   public class ChangeAvatarModel
   {
