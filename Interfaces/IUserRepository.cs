@@ -287,38 +287,37 @@ namespace warehouse.Interfaces
         var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
         if (user == null)
           return new CustomResult(404, "User not found", null);
-        if (_env.WebRootPath == null)
-          _env.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        if (image == null || image.Length == 0)
+          return new CustomResult(400, "No image file uploaded", null);
 
         var folderName = "avatars";
+        var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(image.FileName)}";
 
-        var fileName = DateTime.Now.Ticks + Path.GetFileName(image.FileName);
-        var uploadPath = Path.Combine(_env.WebRootPath, "images", folderName);
+        // Đường dẫn thư mục gốc lưu ảnh
+        var uploadPath = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "images", folderName);
 
         if (!Directory.Exists(uploadPath))
           Directory.CreateDirectory(uploadPath);
 
         var filePath = Path.Combine(uploadPath, fileName);
-
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
           await image.CopyToAsync(stream);
         }
 
-        user.Avatar = $"{folderName}/{fileName}";
+        // Lấy URL public
+        string imageUrl;
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request != null)
+          imageUrl = $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}";
+        else
+          imageUrl = $"/images/{folderName}/{fileName}";
+
+        // Cập nhật user
+        user.Avatar = imageUrl;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
-        var imageUrl = string.Empty;
-        if (_httpContextAccessor.HttpContext != null)
-        {
-          var request = _httpContextAccessor.HttpContext.Request;
-          imageUrl = $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}";
-        }
-        else
-        {
-          imageUrl = $"/images/{folderName}/{fileName}";
-        }
-        user.Avatar = imageUrl;
 
         return new CustomResult(200, "Success", user);
       }
@@ -327,7 +326,6 @@ namespace warehouse.Interfaces
         return new CustomResult(400, "Failed", ex.Message);
       }
     }
-
 
   }
 }
