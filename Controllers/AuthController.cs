@@ -1,10 +1,6 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
 using warehouse.RequestModels;
-using warehouse.ReturnModels;
 using warehouse.Services;
 
 namespace warehouse.Controllers
@@ -22,10 +18,10 @@ namespace warehouse.Controllers
       _mailService = mailService;
     }
     [HttpPost]
-    [Route("admin-login")]
+    [Route("login")]
     public async Task<IActionResult> AdminLogin([FromForm] RequestLogin account)
     {
-      var customResult = await _unitOfWork.UserRepository.AdminLogin(account);
+      var customResult = await _unitOfWork.UserRepository.Login(account);
       return Ok(customResult);
     }
 

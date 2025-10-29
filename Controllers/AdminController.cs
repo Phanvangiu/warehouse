@@ -33,7 +33,7 @@ namespace warehouse.Controllers
     [HttpPost]
     [Authorize(Roles = "Admin")]
     [Route("create-employee")]
-    public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployee employeeModel)
+    public async Task<IActionResult> CreateEmployee([FromForm] CreateEmployee employeeModel)
     {
       var customResult = await _unitOfWork.UserRepository.CreateEmployee(employeeModel);
       return Ok(customResult);

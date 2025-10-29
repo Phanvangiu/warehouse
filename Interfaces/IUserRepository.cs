@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -20,7 +21,7 @@ namespace warehouse.Interfaces
     void UpdateOwner(User owner);
     void DeleteOwner(User owner);
     Task<User> ManagerAuthenticate(RequestLogin account);
-    Task<CustomResult> AdminLogin(RequestLogin account);
+    Task<CustomResult> Login(RequestLogin account);
     Task<bool> CheckEmailExist(string email);
     Task<bool> CheckPhoneExist(string phone);
     Task<CustomResult> CreateCustomer(CreateCustomerModel account);
@@ -42,13 +43,15 @@ namespace warehouse.Interfaces
     private readonly IConfiguration _config;
     private readonly IMailService _mailService;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService, IHttpContextAccessor httpContextAccessor) : base(dataContext)
+    private readonly IMapper _mapper;
+    public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(dataContext)
     {
       _logger = logger;
       _config = configuration;
       _env = env;
       _mailService = mailService;
       _httpContextAccessor = httpContextAccessor;
+      _mapper = mapper;
     }
     public void CreateOwner(User owner)
     {
@@ -78,7 +81,7 @@ namespace warehouse.Interfaces
     public async Task<User> ManagerAuthenticate(RequestLogin account)
     {
       var verified = await _context.Users.Include(u => u.Role)
-      .Where(u => u.Email == account.Email && (u.RoleId == 1 || u.RoleId == 2)).SingleOrDefaultAsync();
+      .Where(u => u.Email == account.Email).SingleOrDefaultAsync();
       if (verified != null)
       {
         if (BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
@@ -88,7 +91,7 @@ namespace warehouse.Interfaces
       }
       return null;
     }
-    public async Task<CustomResult> AdminLogin(RequestLogin account)
+    public async Task<CustomResult> Login(RequestLogin account)
     {
       var user = await ManagerAuthenticate(account);
       if (user == null)
@@ -211,7 +214,7 @@ namespace warehouse.Interfaces
           return new CustomResult(400, "Phone number already exist", null);
         }
       }
-      return new CustomResult(200, "jdtgh", null);
+      return new CustomResult(200, "Success", null);
     }
 
     public async Task<CustomResult> GetAllCustomer()
@@ -225,7 +228,7 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> GetAllEmployee()
     {
-      var employees = await _context.Users.Where(u => u.Role.RoleName == "Employee").ToListAsync();
+      var employees = await _context.Users.Where(u => u.Role!.RoleName == "Employee").ToListAsync();
       if (employees == null)
       {
         return new CustomResult(200, "Not found", null);
@@ -234,12 +237,9 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> GetUser(string email)
     {
-      if (email == "")
-      {
-        return new CustomResult(404, "find not found ", null);
-      }
       var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-      return new CustomResult(200, "user", user);
+      var userResult = _mapper.Map<UserResult>(user);
+      return new CustomResult(200, "user", userResult);
     }
     public async Task<CustomResult> ChangePassword(int userId, ChangePasswordModel model)
     {
