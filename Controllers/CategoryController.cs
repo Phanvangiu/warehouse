@@ -18,7 +18,7 @@ namespace warehouse.Controllers
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-      var customResult = await _unitOfWork.CategoryRepository.GetCategoriesAsync();
+      var customResult = await _unitOfWork.CategoryRepository.GetCategories();
       return Ok(customResult);
     }
 

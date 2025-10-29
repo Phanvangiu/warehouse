@@ -10,6 +10,7 @@ namespace warehouse.Controllers
   public class AdminController : ControllerBase
   {
     private IUnitOfWork _unitOfWork;
+
     public AdminController(IUnitOfWork unitOfWork)
     {
       _unitOfWork = unitOfWork;

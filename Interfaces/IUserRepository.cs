@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AutoMapper;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using warehouse.Data;
@@ -37,7 +36,6 @@ namespace warehouse.Interfaces
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
   {
-
     private readonly ILogger<UserRepository> _logger;
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;

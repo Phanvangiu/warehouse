@@ -11,9 +11,10 @@ namespace warehouse.Models
     public string? Descripton { get; set; }
     public decimal DefaultPrice { get; set; }
     public string? Unit { get; set; }
+    public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public virtual Category? Category { get; set; }
-    public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+    public virtual ICollection<ProductImage>? ProductImages { get; set; }
   }
 }

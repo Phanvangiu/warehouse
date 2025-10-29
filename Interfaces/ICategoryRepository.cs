@@ -8,7 +8,7 @@ namespace warehouse.Interfaces
 {
   public interface ICategoryRepository : IRepository<Category>
   {
-    Task<CustomResult> GetCategoriesAsync();
+    Task<CustomResult> GetCategories();
     Task<CustomResult> GetCategory(int categoryId);
     Task<CustomResult> CreateCategory(Category category);
     Task<CustomResult> UpdateCategory(CategoryModel category);
@@ -29,7 +29,7 @@ namespace warehouse.Interfaces
       _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<CustomResult> GetCategoriesAsync()
+    public async Task<CustomResult> GetCategories()
     {
       var categories = await _context.Categories.ToListAsync();
       return new CustomResult(200, "list of categories", categories);
