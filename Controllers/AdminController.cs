@@ -6,7 +6,8 @@ using warehouse.ReturnModels;
 
 namespace warehouse.Controllers
 {
-
+  [ApiController]
+  [Route("api/[controller]")]
   public class AdminController : ControllerBase
   {
     private IUnitOfWork _unitOfWork;
