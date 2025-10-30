@@ -28,8 +28,19 @@ namespace warehouse.Interfaces
     public async Task<CustomResult> GetProducts()
     {
       var products = await _context.Products
-          .Include(p => p.ProductImages)
-          .ToListAsync();
+          .Select(p => new
+          {
+            p.Id,
+            p.ProductName,
+            p.CategoryId,
+            p.Descripton,
+            p.DefaultPrice,
+            p.Unit,
+            p.IsActive,
+            p.CreatedAt,
+            p.UpdatedAt,
+            ProductImages = p.ProductImages.Select(img => img.Image).ToList()
+          }).ToListAsync();
 
       if (products.Count == 0)
       {
