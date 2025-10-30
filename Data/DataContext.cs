@@ -66,10 +66,9 @@ namespace warehouse.Data
         .OnDelete(DeleteBehavior.Restrict);
 
       modelBuilder.Entity<ProductImage>()
-        .HasOne(pi => pi.Product)
-        .WithMany()
-        .HasForeignKey(pi => pi.ProductId)
-        .OnDelete(DeleteBehavior.Restrict);
+         .HasOne(pi => pi.Product)
+         .WithMany(p => p.ProductImages)
+         .HasForeignKey(pi => pi.ProductId);
 
       modelBuilder.Entity<ProductPrice>()
         .HasOne(pp => pp.Product)
@@ -217,9 +216,9 @@ namespace warehouse.Data
 
       // --- Seed Users ---
       modelBuilder.Entity<User>().HasData(
-          new User { Id = 1, Name = "System Admin", Email = "admin@warehouse.com", Password = "$2a$12$e9GJ/3rjKXQ0wLMPF8WlOeS0zEj3qY3rTpVZy/7uOwqG1sZt6oZyC", RoleId = 1 },
-          new User { Id = 2, Name = "John Employee", Email = "employee@warehouse.com", Password = "$2a$12$3hDiijou6UerSjQo1tsLFer/nITyFb6dpEgHjs038FeuGooRhEkBm", RoleId = 2 },
-          new User { Id = 3, Name = "Jane Customer", Email = "customer@warehouse.com", Password = "$2a$12$3hDiijou6UerSjQo1tsLFer/nITyFb6dpEgHjs038FeuGooRhEkBm", RoleId = 3 }
+          new User { Id = 1, Name = "System Admin", Email = "admin@warehouse.com", Password = "$2a$11$tfnSSwdm.iFm9EXJ.6UuiOBECSP3T5qkqY/Myk.MqsvO19X/r9SY2", RoleId = 1 },
+          new User { Id = 2, Name = "John Employee", Email = "employee@warehouse.com", Password = "$2a$11$tfnSSwdm.iFm9EXJ.6UuiOBECSP3T5qkqY/Myk.MqsvO19X/r9SY2", RoleId = 2 },
+          new User { Id = 3, Name = "Jane Customer", Email = "customer@warehouse.com", Password = "$2a$11$tfnSSwdm.iFm9EXJ.6UuiOBECSP3T5qkqY/Myk.MqsvO19X/r9SY2", RoleId = 3 }
       );
     }
   }

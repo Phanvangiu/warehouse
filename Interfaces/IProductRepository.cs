@@ -11,7 +11,7 @@ namespace warehouse.Interfaces
     Task<CustomResult> GetProducts();
     Task<CustomResult> DeleteProduct(int Id);
     Task<CustomResult> CreateProduct(CreateProductModel productCreateModel);
-    Task<CustomResult> UpdateProduct(CreateProductModel productUpdateModel);
+    Task<CustomResult> UpdateProduct(UpdateProductModel productUpdateModel);
   }
 
 
@@ -27,13 +27,18 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> GetProducts()
     {
-      var products = await _context.Products.ToListAsync();
+      var products = await _context.Products
+          .Include(p => p.ProductImages)
+          .ToListAsync();
+
       if (products.Count == 0)
       {
-        return new CustomResult(200, "list empty", new List<Product>());
+        return new CustomResult(200, "List empty", new List<Product>());
       }
-      return new CustomResult(200, "list of products", products);
+
+      return new CustomResult(200, "List of products", products);
     }
+
     public async Task<CustomResult> DeleteProduct(int id)
     {
       try
@@ -50,7 +55,6 @@ namespace warehouse.Interfaces
       }
       catch (System.Exception)
       {
-
         throw;
       }
     }
@@ -85,7 +89,6 @@ namespace warehouse.Interfaces
         Directory.CreateDirectory(uploadPath);
 
         var request = _httpContextAccessor.HttpContext?.Request;
-
         foreach (var item in productCreateModel.Images)
         {
           var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(item.FileName)}";
@@ -105,15 +108,21 @@ namespace warehouse.Interfaces
             Image = imageUrl,
             ProductId = productNew.Id
           };
+
           _context.ProductImages.Add(productImage);
         }
 
         await _context.SaveChangesAsync();
       }
 
+      productNew.ProductImages = await _context.ProductImages
+        .Where(img => img.ProductId == productNew.Id)
+        .ToListAsync();
+
       return new CustomResult(200, "Product created successfully", productNew);
     }
-    public async Task<CustomResult> UpdateProduct(CreateProductModel productUpdateModel)
+
+    public async Task<CustomResult> UpdateProduct(UpdateProductModel productUpdateModel)
     {
       var productOld = await _context.Products.SingleOrDefaultAsync(p => p.Id == productUpdateModel.Id);
       if (productOld == null)

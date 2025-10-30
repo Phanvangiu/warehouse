@@ -1,7 +1,8 @@
 namespace warehouse.RequestModels
 {
-  public class CreateProductModel
+  public class UpdateProductModel
   {
+    public int Id;
     public string ProductName { get; set; } = string.Empty;
     public int CategoryId { get; set; }
     public string? Descripton { get; set; }
