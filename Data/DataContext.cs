@@ -31,22 +31,30 @@ namespace warehouse.Data
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       base.OnModelCreating(modelBuilder);
+      modelBuilder.Entity<StoreUser>()
+          .HasOne(su => su.Store)
+          .WithMany(s => s.StoreUsers)
+          .HasForeignKey(su => su.StoreId)
+          .OnDelete(DeleteBehavior.Cascade);
 
-      modelBuilder.Entity<Store>()
-        .HasOne<User>()
-        .WithMany()
-        .HasForeignKey(s => s.ManagerId)
-        .OnDelete(DeleteBehavior.Restrict);
       modelBuilder.Entity<StoreUser>()
-        .HasOne(su => su.Store)
+          .HasOne(su => su.User)
+          .WithMany()
+          .HasForeignKey(su => su.UserId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+      modelBuilder.Entity<PositionHistory>()
+        .HasOne(ph => ph.Employee)
         .WithMany()
-        .HasForeignKey(su => su.StoreId)
+        .HasForeignKey(ph => ph.EmployeeId)
         .OnDelete(DeleteBehavior.Restrict);
-      modelBuilder.Entity<StoreUser>()
-       .HasOne(su => su.User)
-       .WithMany()
-       .HasForeignKey(su => su.UserId)
-       .OnDelete(DeleteBehavior.Restrict);
+
+      modelBuilder.Entity<PositionHistory>()
+        .HasOne(ph => ph.Position)
+        .WithMany()
+        .HasForeignKey(ph => ph.PositionId)
+        .OnDelete(DeleteBehavior.Cascade);
+
 
       modelBuilder.Entity<Wallet>()
         .HasOne(w => w.User)
@@ -115,15 +123,6 @@ namespace warehouse.Data
         .HasOne<User>()
         .WithMany()
         .HasForeignKey(st => st.CreatedBy)
-        .OnDelete(DeleteBehavior.Restrict);
-      // --- Quan hệ Role - User ---
-
-
-
-      modelBuilder.Entity<Product>()
-        .HasOne(p => p.Category)
-        .WithMany(c => c.Products)
-        .HasForeignKey(p => p.CategoryId)
         .OnDelete(DeleteBehavior.Restrict);
 
       modelBuilder.Entity<Order>()
