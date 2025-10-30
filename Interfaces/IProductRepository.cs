@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using warehouse.Data;
 using warehouse.Models;
+using warehouse.RequestModels;
 using warehouse.ReturnModels;
 
 namespace warehouse.Interfaces
@@ -9,14 +10,20 @@ namespace warehouse.Interfaces
   {
     Task<CustomResult> GetProducts();
     Task<CustomResult> DeleteProduct(int Id);
+    Task<CustomResult> CreateProduct(CreateProductModel productCreateModel);
+    Task<CustomResult> UpdateProduct(CreateProductModel productUpdateModel);
   }
 
 
   public class ProductRepository : GenericRepository<Product>, IProductRepository
   {
-    public ProductRepository(DataContext dataContext) : base(dataContext)
+    private IWebHostEnvironment _env;
+    private IHttpContextAccessor _httpContextAccessor;
+    public ProductRepository(DataContext dataContext, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor) : base(dataContext)
     {
       _context = dataContext;
+      _env = env;
+      _httpContextAccessor = httpContextAccessor;
     }
     public async Task<CustomResult> GetProducts()
     {
@@ -47,6 +54,111 @@ namespace warehouse.Interfaces
         throw;
       }
     }
+    public async Task<CustomResult> CreateProduct(CreateProductModel productCreateModel)
+    {
+      if (productCreateModel == null)
+      {
+        return new CustomResult(400, "Product model is null", null);
+      }
+
+      var productNew = new Product
+      {
+        ProductName = productCreateModel.ProductName,
+        Descripton = productCreateModel.Descripton,
+        DefaultPrice = productCreateModel.DefaultPrice,
+        CategoryId = productCreateModel.CategoryId,
+        Unit = productCreateModel.Unit,
+        IsActive = productCreateModel.IsActive,
+      };
+
+      _context.Products.Add(productNew);
+      await _context.SaveChangesAsync();
+
+      if (productCreateModel.Images != null && productCreateModel.Images.Count > 0)
+      {
+        var folderName = "products";
+        var uploadPath = Path.Combine(
+            _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+            "images", folderName
+        );
+
+        Directory.CreateDirectory(uploadPath);
+
+        var request = _httpContextAccessor.HttpContext?.Request;
+
+        foreach (var item in productCreateModel.Images)
+        {
+          var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(item.FileName)}";
+          var filePath = Path.Combine(uploadPath, fileName);
+
+          using (var stream = new FileStream(filePath, FileMode.Create))
+          {
+            await item.CopyToAsync(stream);
+          }
+
+          string imageUrl = request != null
+              ? $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}"
+              : $"images/{folderName}/{fileName}";
+
+          var productImage = new ProductImage
+          {
+            Image = imageUrl,
+            ProductId = productNew.Id
+          };
+          _context.ProductImages.Add(productImage);
+        }
+
+        await _context.SaveChangesAsync();
+      }
+
+      return new CustomResult(200, "Product created successfully", productNew);
+    }
+    public async Task<CustomResult> UpdateProduct(CreateProductModel productUpdateModel)
+    {
+      var productOld = await _context.Products.SingleOrDefaultAsync(p => p.Id == productUpdateModel.Id);
+      if (productOld == null)
+      {
+        return new CustomResult(200, "Product not found", null);
+      }
+      productOld.DefaultPrice = productUpdateModel.DefaultPrice;
+      productOld.CategoryId = productUpdateModel.CategoryId;
+      productOld.Descripton = productUpdateModel.Descripton;
+      productOld.ProductName = productUpdateModel.ProductName;
+
+      var folderName = "products";
+      var uploadPath = Path.Combine(
+          _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+          "images", folderName
+      );
+      var request = _httpContextAccessor.HttpContext?.Request;
+
+      if (productUpdateModel.Images != null && productUpdateModel.Images.Count() > 0)
+      {
+        foreach (var item in productUpdateModel.Images)
+        {
+          var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(item.FileName)}";
+          var filePath = Path.Combine(uploadPath, fileName);
+
+          using (var stream = new FileStream(filePath, FileMode.Create))
+          {
+            await item.CopyToAsync(stream);
+          }
+
+          string imageUrl = request != null
+              ? $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}"
+              : $"images/{folderName}/{fileName}";
+
+          var productImage = new ProductImage
+          {
+            Image = imageUrl,
+            ProductId = productOld.Id
+          };
+          _context.ProductImages.Add(productImage);
+        }
+      }
+      return new CustomResult(200, "Product updated successfully", null);
+    }
+
   }
 
 }
