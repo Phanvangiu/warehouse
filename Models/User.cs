@@ -7,16 +7,15 @@ namespace warehouse.Models
   public class User
   {
     public int Id { get; set; }
-    [Required, EmailAddress]
-    public string Email { get; set; } = string.Empty;
-    [Required]
-    public string Password { get; set; } = string.Empty;
+    [EmailAddress]
+    public required string Email { get; set; } = string.Empty;
+    public required string Password { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public string? Name { get; set; }
     public string? Phone { get; set; }
     public string? Sex { get; set; }
     public bool IsActive { get; set; }
-    public DateTime Dob { get; set; }
+    public DateTime? Dob { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public int RoleId { get; set; }
@@ -25,4 +24,5 @@ namespace warehouse.Models
     public virtual ICollection<StoreUser>? StoreUsers { get; set; }
     public virtual ICollection<Order>? Orders { get; set; }
   }
+
 }

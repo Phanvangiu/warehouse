@@ -15,6 +15,7 @@ namespace warehouse.Models
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public virtual Category? Category { get; set; }
-    public virtual ICollection<ProductImage>? ProductImages { get; set; }
+    public virtual ICollection<ProductImage> ProductImages { get; set; } = [];
+
   }
 }
