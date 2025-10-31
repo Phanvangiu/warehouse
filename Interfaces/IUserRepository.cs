@@ -14,12 +14,7 @@ namespace warehouse.Interfaces
 {
   public interface IUserRepository : IRepository<User>
   {
-    Task<IEnumerable<User>> GetAllUsersAsync();
-    Task<User> GetUserByIdAsync(int userId);
-    void CreateOwner(User owner);
-    void UpdateOwner(User owner);
-    void DeleteOwner(User owner);
-    Task<User> ManagerAuthenticate(RequestLogin account);
+    Task<User?> ManagerAuthenticate(RequestLogin account);
     Task<CustomResult> Login(RequestLogin account);
     Task<bool> CheckEmailExist(string email);
     Task<bool> CheckPhoneExist(string phone);
@@ -51,32 +46,8 @@ namespace warehouse.Interfaces
       _httpContextAccessor = httpContextAccessor;
       _mapper = mapper;
     }
-    public void CreateOwner(User owner)
-    {
-      Add(owner);
-    }
 
-    public void DeleteOwner(User owner)
-    {
-      Delete(owner);
-    }
-    public void UpdateOwner(User owner)
-    {
-      Update(owner);
-    }
-
-    public async Task<IEnumerable<User>> GetAllUsersAsync()
-    {
-      return await _context.Users.ToListAsync();
-    }
-
-
-
-    public async Task<User> GetUserByIdAsync(int ownerId)
-    {
-      return await _context.Users.FindAsync(ownerId);
-    }
-    public async Task<User> ManagerAuthenticate(RequestLogin account)
+    public async Task<User?> ManagerAuthenticate(RequestLogin account)
     {
       var verified = await _context.Users.Include(u => u.Role)
       .Where(u => u.Email == account.Email).SingleOrDefaultAsync();
@@ -94,12 +65,12 @@ namespace warehouse.Interfaces
       var user = await ManagerAuthenticate(account);
       if (user == null)
       {
-        return new CustomResult(404, "Email or password is wrong", null);
+        return new CustomResult(404, "Email or password is wrong", null!);
       }
 
       if (user.IsActive == false)
       {
-        return new CustomResult(401, "Account is not active", null);
+        return new CustomResult(401, "Account is not active", null!);
       }
 
       var token = CreateToken(user);
@@ -109,38 +80,39 @@ namespace warehouse.Interfaces
     }
     private string CreateToken(User user)
     {
-      var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]!));
+      var key = _config["JwtSettings:Key"];
+      if (string.IsNullOrWhiteSpace(key))
+        throw new InvalidOperationException("JWT key is missing in configuration.");
+
+      var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
       var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+      var roleName = user.Role?.RoleName ?? "User"; // fallback an toàn
 
       var claims = new[]
       {
-                  new Claim(ClaimTypes.Email, user.Email),
-                  new Claim(ClaimTypes.Role, user.Role.RoleName),
-                  new Claim("Id", user.Id.ToString()),
-              };
+        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+        new Claim(ClaimTypes.Role, roleName),
+        new Claim("Id", user.Id.ToString())
+    };
 
+      // create token
       var token = new JwtSecurityToken(
-              issuer: _config["JwtSettings:Issuer"],
-              audience: _config["JwtSettings:Audience"],
-              signingCredentials: credentials,
-              claims: claims,
-              expires: DateTime.Now.AddDays(7)
-          );
+          issuer: _config["JwtSettings:Issuer"],
+          audience: _config["JwtSettings:Audience"],
+          claims: claims,
+          expires: DateTime.UtcNow.AddDays(7),
+          signingCredentials: credentials
+      );
 
       return new JwtSecurityTokenHandler().WriteToken(token);
     }
     public async Task<bool> CheckEmailExist(string email)
     {
-      if (email == "")
-      {
-        return true;
-      }
-      var verified = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-      if (verified == null)
-      {
+      if (string.IsNullOrWhiteSpace(email))
         return false;
-      }
-      return true;
+
+      return await _context.Users.AnyAsync(u => u.Email == email);
     }
     public async Task<bool> CheckPhoneExist(string phone)
     {
@@ -153,140 +125,257 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> CreateCustomer(CreateCustomerModel account)
     {
-      var verifiedEmail = await CheckEmailExist(account.Email!);
-
-      if (verifiedEmail == true)
+      try
       {
-        return new CustomResult(400, "Email already exist", null);
+        var verifiedEmail = await CheckEmailExist(account.Email!);
+        if (verifiedEmail)
+          return new CustomResult(400, "Email already exists.", null!);
+
+        var verifiedPhone = await CheckPhoneExist(account.Phone!);
+        if (verifiedPhone)
+          return new CustomResult(400, "Phone number already exists.", null!);
+
+        var customerRole = await _context.Roles.SingleOrDefaultAsync(ur => ur.RoleName == "Customer");
+        if (customerRole == null)
+          return new CustomResult(404, "Customer role not found.", null!);
+
+        var customer = new User
+        {
+          Email = account.Email!,
+          Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
+          IsActive = true,
+          Phone = account.Phone,
+          Name = account.Name,
+          RoleId = customerRole.Id,
+        };
+
+        _context.Users.Add(customer);
+        await _context.SaveChangesAsync();
+
+        var token = CreateToken(customer);
+
+        _ = _mailService.SendMail(new MailRequest(
+                    customer.Email,
+                    "Verify Email",
+                    $"<h1>Thank you for registering</h1>" +
+                    $"<p>Please verify your email by clicking the following link:</p>" +
+                    $"<h3>{token}</h3>"
+                // $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
+                ))
+            .ContinueWith(t =>
+            {
+              if (t.IsFaulted)
+                _logger.LogError(t.Exception, "Error sending verification email to {Email}", customer.Email);
+            });
+
+        return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
       }
-
-      var verifiedPhone = await CheckPhoneExist(account.Phone!);
-
-      if (verifiedPhone == true)
+      catch (DbUpdateException dbEx)
       {
-        return new CustomResult(400, "Phone number already exist", null);
+        _logger.LogError(dbEx, "Database error while creating customer");
+        return new CustomResult(500, "A database error occurred while creating the account.", null!);
       }
-      var customerRole = await _context.Roles.SingleOrDefaultAsync(ur => ur.RoleName == "Customer");
-      var customer = new User()
+      catch (Exception ex)
       {
-        Email = account.Email!,
-        Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
-        IsActive = true,
-        Phone = account.Phone,
-        Name = account.Name,
-        Role = customerRole,
-        RoleId = customerRole!.Id
-      };
-      _context.Users.Add(customer);
-      await _context.SaveChangesAsync();
-      var token = CreateToken(customer);
-      _ = _mailService.SendMail(new MailRequest(customer.Email, "Verify Email",
-                  $"<h1>Thank you for registering</h1>" +
-                         $"<p>Please verify your email by clicking the following link: </p>" +
-                         $"<h1>{token}</h1>"
-                         //  $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
-                         ))
-              .ContinueWith(t =>
-              {
-                if (t.IsFaulted)
-                {
-                  _logger.LogError(t.Exception, "Some Exception in Test");
-                }
-              });
-      return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
+        _logger.LogError(ex, "Unexpected error while creating customer");
+        return new CustomResult(500, "An unexpected error occurred while creating the account.", null!);
+      }
     }
     public async Task<CustomResult> CreateEmployee(CreateEmployee account)
     {
-      var verifiedEmail = await CheckEmailExist(account.Email);
-
-      if (verifiedEmail == true)
+      try
       {
-        return new CustomResult(400, "Email already exist", null);
-      }
-      if (account.Phone != null)
-      {
-        var verifiedPhone = await CheckPhoneExist(account.Phone);
+        if (account == null)
+          return new CustomResult(400, "Invalid request: employee data is missing.", null!);
 
-        if (verifiedPhone == true)
+        if (string.IsNullOrWhiteSpace(account.Email))
+          return new CustomResult(400, "Email is required.", null!);
+
+        if (string.IsNullOrWhiteSpace(account.Phone))
+          return new CustomResult(400, "Phone is required.", null!);
+
+
+        if (await CheckEmailExist(account.Email))
+          return new CustomResult(400, "Email already exists.", null!);
+
+        if (await CheckPhoneExist(account.Phone))
+          return new CustomResult(400, "Phone number already exists.", null!);
+        var employeeNew = new User
         {
-          return new CustomResult(400, "Phone number already exist", null);
-        }
-      }
-      return new CustomResult(200, "Success", null);
-    }
+          Email = account.Email,
+          Dob = account.Dob,
+          Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
+          Name = account.Name,
+          RoleId = account.RoleId,
+          Phone = account.Phone,
+          IsActive = true,
+        };
 
+        if (account.Avatar != null && account.Avatar.Length > 0)
+        {
+          var folderName = "avatars";
+          var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(account.Avatar.FileName)}";
+
+          var uploadPath = Path.Combine(
+              _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+              "images", folderName);
+
+          if (!Directory.Exists(uploadPath))
+            Directory.CreateDirectory(uploadPath);
+
+          var filePath = Path.Combine(uploadPath, fileName);
+          using (var stream = new FileStream(filePath, FileMode.Create))
+          {
+            await account.Avatar.CopyToAsync(stream);
+          }
+
+          var request = _httpContextAccessor.HttpContext?.Request;
+          employeeNew.Avatar = request != null
+              ? $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}"
+              : $"/images/{folderName}/{fileName}";
+        }
+
+        _context.Users.Add(employeeNew);
+        await _context.SaveChangesAsync();
+
+        return new CustomResult(200, "Employee created successfully.", employeeNew);
+      }
+      catch (DbUpdateException ex)
+      {
+        return new CustomResult(500, $"Database error: {ex.InnerException?.Message ?? ex.Message}", null!);
+      }
+      catch (IOException ex)
+      {
+        return new CustomResult(500, $"File upload error: {ex.Message}", null!);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"Unexpected error: {ex.Message}", null!);
+      }
+    }
     public async Task<CustomResult> GetAllCustomer()
     {
-      var customer = await _context.Users.Where(u => u.Role.RoleName == "Customer").ToListAsync();
-      if (customer == null)
+      try
       {
-        return new CustomResult(200, "Not found", null);
+        var customer = await _context.Users.Where(u => u.Role!.RoleName == "Customer").ToListAsync();
+        if (customer == null)
+        {
+          return new CustomResult(200, "Not found", null!);
+        }
+        return new CustomResult(200, "List of customers", customer);
       }
-      return new CustomResult(200, "List of customers", customer);
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while retrieving customers: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> GetAllEmployee()
     {
-      var employees = await _context.Users.Where(u => u.Role!.RoleName == "Employee").ToListAsync();
-      if (employees == null)
+      try
       {
-        return new CustomResult(200, "List empty", null);
+        var employees = await _context.Users
+          .Include(u => u.Role)
+          .Where(u => u.Role!.RoleName == "Employee")
+          .ToListAsync();
+
+        if (employees.Count == 0)
+        {
+          return new CustomResult(200, "List empty", null!);
+        }
+
+        return new CustomResult(200, "Employees retrieved successfully.", employees);
       }
-      return new CustomResult(200, "Employees retrieved successfully.", employees);
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while retrieving employees: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> GetUser(string email)
     {
-      var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-      var userResult = _mapper.Map<UserResult>(user);
-      return new CustomResult(200, "User retrieved successfully.", userResult);
+      try
+      {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+          return new CustomResult(404, "User not found.", null!);
+
+        var userResult = _mapper.Map<UserResult>(user);
+
+        return new CustomResult(200, "User retrieved successfully.", userResult);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while retrieving the user: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> ChangePassword(int userId, ChangePasswordModel model)
     {
-      var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
-      if (user == null)
-        return new CustomResult(404, "User not found", null);
+      try
+      {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+          return new CustomResult(404, "User not found.", null!);
 
-      if (!BCrypt.Net.BCrypt.Verify(model.PreviousPassword, user.Password))
-        return new CustomResult(400, "Wrong password", null);
+        if (!BCrypt.Net.BCrypt.Verify(model.PreviousPassword, user.Password))
+          return new CustomResult(400, "Incorrect current password.", null!);
 
-      if (BCrypt.Net.BCrypt.Verify(model.NewPassword, user.Password))
-        return new CustomResult(400, "New password cannot be same as old password", null);
+        if (BCrypt.Net.BCrypt.Verify(model.NewPassword, user.Password))
+          return new CustomResult(400, "New password cannot be the same as the current password.", null!);
 
-      user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
-      _context.Users.Update(user);
-      await _context.SaveChangesAsync();
+        user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
 
-      return new CustomResult(200, "Password changed successfully", null);
+        return new CustomResult(200, "Password changed successfully.", null!);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while changing the password: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> ActivateEmployee(int userId)
     {
-      var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
-
-      if (employee == null)
+      try
       {
-        return new CustomResult(404, "Employee not found.", null);
-      }
+        var employee = await _context.Users.FindAsync(userId);
 
-      if (employee.IsActive)
+        if (employee is null)
+          return new CustomResult(404, "Employee not found.", null!);
+
+        if (employee.IsActive)
+          return new CustomResult(400, "Employee is already active.", employee);
+
+        employee.IsActive = true;
+        await _context.SaveChangesAsync();
+
+        return new CustomResult(200, "Employee activated successfully.", employee);
+      }
+      catch (Exception ex)
       {
-        return new CustomResult(400, "Employee is already active.", employee);
+        return new CustomResult(500, $"An error occurred while activating the employee: {ex.Message}", null!);
       }
-
-      employee.IsActive = true;
-      _context.Users.Update(employee);
-      await _context.SaveChangesAsync();
-
-      return new CustomResult(200, "Employee activated successfully.", employee);
     }
-
     public async Task<CustomResult> DeactivateEmployee(int userId)
     {
-      var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
-      if (employee == null)
-      { return new CustomResult(404, "Employee not found", null); }
-      employee.IsActive = false;
-      _context.Users.Update(employee);
-      await _context.SaveChangesAsync();
-      return new CustomResult(200, "Employee activated successfully.", employee);
+      try
+      {
+        var employee = await _context.Users.FindAsync(userId);
+
+        if (employee is null)
+          return new CustomResult(404, "Employee not found.", null!);
+
+        if (!employee.IsActive)
+          return new CustomResult(400, "Employee is already deactivated.", employee);
+
+        employee.IsActive = false;
+        await _context.SaveChangesAsync();
+
+        return new CustomResult(200, "Employee deactivated successfully.", employee);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while deactivating the employee: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> ChangeUserImage(string email, IFormFile image)
     {
@@ -294,10 +383,10 @@ namespace warehouse.Interfaces
       {
         var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
         if (user == null)
-          return new CustomResult(404, "User not found.", null);
+          return new CustomResult(404, "User not found.", null!);
 
         if (image == null || image.Length == 0)
-          return new CustomResult(400, "No image file uploaded.", null);
+          return new CustomResult(400, "No image file uploaded.", null!);
 
         var folderName = "avatars";
         var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(image.FileName)}";
@@ -333,7 +422,7 @@ namespace warehouse.Interfaces
       }
       catch (Exception ex)
       {
-        return new CustomResult(500, $"An error occurred while updating the user image: {ex.Message}", null);
+        return new CustomResult(500, $"An error occurred while updating the user image: {ex.Message}", null!);
       }
     }
   }

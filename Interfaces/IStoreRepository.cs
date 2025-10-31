@@ -19,34 +19,51 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> GetStores()
     {
-      var list = await _context.Stores.ToListAsync();
-      if (list.Count == 0)
+      try
       {
-        return new CustomResult(200, "list empty", null);
+        var list = await _context.Stores.ToListAsync();
+        if (list.Count == 0)
+        {
+          return new CustomResult(200, "List empty", null!);
+        }
+        return new CustomResult(200, "Stores retrieved successfully", null!);
       }
-      return new CustomResult(200, "list of store", null);
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while retrieving stores: {ex.Message}", null!);
+      }
     }
     public async Task<CustomResult> CreateStore(CreateStoreModel createStoreModel)
     {
-      if (createStoreModel == null)
-      {
-        return new CustomResult(400, "Invalid request: store data cannot be null.", null);
-      }
-      if (string.IsNullOrWhiteSpace(createStoreModel.Address) ||
-          string.IsNullOrWhiteSpace(createStoreModel.Code) ||
-          string.IsNullOrWhiteSpace(createStoreModel.Phone))
-      {
-        return new CustomResult(400, "Invalid request: address, code, and phone are required.", null);
-      }
-      var storeNew = new Store();
-      storeNew.Address = createStoreModel.Address;
-      storeNew.Code = createStoreModel.Address;
-      storeNew.Phone = createStoreModel.Phone;
-      storeNew.StoreType = "Branch";
-      _context.Stores.Add(storeNew);
-      await _context.SaveChangesAsync();
 
-      return new CustomResult(200, "Store created successfully.", null);
+      try
+      {
+        if (createStoreModel is null)
+        {
+          return new CustomResult(400, "Invalid request: store data cannot be null.", null!);
+        }
+        if (string.IsNullOrWhiteSpace(createStoreModel.Address) ||
+            string.IsNullOrWhiteSpace(createStoreModel.Code) ||
+            string.IsNullOrWhiteSpace(createStoreModel.Phone))
+        {
+          return new CustomResult(400, "Invalid request: address, code, and phone are required.", null!);
+        }
+        var storeNew = new Store
+        {
+          Address = createStoreModel.Address,
+          Code = createStoreModel.Address,
+          Phone = createStoreModel.Phone,
+          StoreType = "Branch"
+        };
+        _context.Stores.Add(storeNew);
+        await _context.SaveChangesAsync();
+
+        return new CustomResult(200, "Store created successfully.", null!);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while creating store: {ex.Message}", null!);
+      }
     }
 
 
