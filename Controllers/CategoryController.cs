@@ -31,9 +31,9 @@ namespace warehouse.Controllers
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromForm] Category category)
+    public async Task<IActionResult> Create([FromForm] CategoryModel categoryModel)
     {
-      var customResult = await _unitOfWork.CategoryRepository.CreateCategory(category);
+      var customResult = await _unitOfWork.CategoryRepository.CreateCategory(categoryModel);
       return Ok(customResult);
     }
     [HttpPut]
