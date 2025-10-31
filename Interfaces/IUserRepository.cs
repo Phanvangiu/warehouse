@@ -94,17 +94,17 @@ namespace warehouse.Interfaces
       var user = await ManagerAuthenticate(account);
       if (user == null)
       {
-        return new CustomResult(404, "Not Found", null);
+        return new CustomResult(404, "Email or password is wrong", null);
       }
 
-      if (user.Role!.RoleName == "Admin" && user.IsActive == false)
+      if (user.IsActive == false)
       {
         return new CustomResult(401, "Account is not active", null);
       }
 
       var token = CreateToken(user);
 
-      return new CustomResult(200, "token", token);
+      return new CustomResult(200, "Token", token);
 
     }
     private string CreateToken(User user)
@@ -153,14 +153,14 @@ namespace warehouse.Interfaces
     }
     public async Task<CustomResult> CreateCustomer(CreateCustomerModel account)
     {
-      var verifiedEmail = await CheckEmailExist(account.Email);
+      var verifiedEmail = await CheckEmailExist(account.Email!);
 
       if (verifiedEmail == true)
       {
         return new CustomResult(400, "Email already exist", null);
       }
 
-      var verifiedPhone = await CheckPhoneExist(account.Phone);
+      var verifiedPhone = await CheckPhoneExist(account.Phone!);
 
       if (verifiedPhone == true)
       {
@@ -169,13 +169,13 @@ namespace warehouse.Interfaces
       var customerRole = await _context.Roles.SingleOrDefaultAsync(ur => ur.RoleName == "Customer");
       var customer = new User()
       {
-        Email = account.Email,
+        Email = account.Email!,
         Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
         IsActive = true,
         Phone = account.Phone,
         Name = account.Name,
         Role = customerRole,
-        RoleId = customerRole.Id
+        RoleId = customerRole!.Id
       };
       _context.Users.Add(customer);
       await _context.SaveChangesAsync();
@@ -229,15 +229,15 @@ namespace warehouse.Interfaces
       var employees = await _context.Users.Where(u => u.Role!.RoleName == "Employee").ToListAsync();
       if (employees == null)
       {
-        return new CustomResult(200, "Not found", null);
+        return new CustomResult(200, "List empty", null);
       }
-      return new CustomResult(200, "List of customers", employees);
+      return new CustomResult(200, "Employees retrieved successfully.", employees);
     }
     public async Task<CustomResult> GetUser(string email)
     {
       var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
       var userResult = _mapper.Map<UserResult>(user);
-      return new CustomResult(200, "user", userResult);
+      return new CustomResult(200, "User retrieved successfully.", userResult);
     }
     public async Task<CustomResult> ChangePassword(int userId, ChangePasswordModel model)
     {
@@ -260,23 +260,33 @@ namespace warehouse.Interfaces
     public async Task<CustomResult> ActivateEmployee(int userId)
     {
       var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
       if (employee == null)
-      { return new CustomResult(404, "User not found", null); }
+      {
+        return new CustomResult(404, "Employee not found.", null);
+      }
+
+      if (employee.IsActive)
+      {
+        return new CustomResult(400, "Employee is already active.", employee);
+      }
+
       employee.IsActive = true;
       _context.Users.Update(employee);
       await _context.SaveChangesAsync();
-      return new CustomResult(200, "Success", employee);
 
+      return new CustomResult(200, "Employee activated successfully.", employee);
     }
+
     public async Task<CustomResult> DeactivateEmployee(int userId)
     {
       var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
       if (employee == null)
-      { return new CustomResult(404, "User not found", null); }
+      { return new CustomResult(404, "Employee not found", null); }
       employee.IsActive = false;
       _context.Users.Update(employee);
       await _context.SaveChangesAsync();
-      return new CustomResult(200, "Success", employee);
+      return new CustomResult(200, "Employee activated successfully.", employee);
     }
     public async Task<CustomResult> ChangeUserImage(string email, IFormFile image)
     {
@@ -284,47 +294,48 @@ namespace warehouse.Interfaces
       {
         var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
         if (user == null)
-          return new CustomResult(404, "User not found", null);
+          return new CustomResult(404, "User not found.", null);
 
         if (image == null || image.Length == 0)
-          return new CustomResult(400, "No image file uploaded", null);
+          return new CustomResult(400, "No image file uploaded.", null);
 
         var folderName = "avatars";
         var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(image.FileName)}";
 
-        // Đường dẫn thư mục gốc lưu ảnh
-        var uploadPath = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "images", folderName);
+        // Tạo đường dẫn upload (wwwroot/images/avatars)
+        var uploadPath = Path.Combine(
+            _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+            "images", folderName);
 
         if (!Directory.Exists(uploadPath))
           Directory.CreateDirectory(uploadPath);
 
         var filePath = Path.Combine(uploadPath, fileName);
+
+        // Upload file
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
           await image.CopyToAsync(stream);
         }
 
         // Lấy URL public
-        string imageUrl;
         var request = _httpContextAccessor.HttpContext?.Request;
-        if (request != null)
-          imageUrl = $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}";
-        else
-          imageUrl = $"/images/{folderName}/{fileName}";
+        var imageUrl = request != null
+            ? $"{request.Scheme}://{request.Host}/images/{folderName}/{fileName}"
+            : $"/images/{folderName}/{fileName}";
 
-        // Cập nhật user
+        // Cập nhật avatar
         user.Avatar = imageUrl;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        return new CustomResult(200, "Success", user);
+        return new CustomResult(200, "User avatar updated successfully.", user);
       }
       catch (Exception ex)
       {
-        return new CustomResult(400, "Failed", ex.Message);
+        return new CustomResult(500, $"An error occurred while updating the user image: {ex.Message}", null);
       }
     }
-
   }
 }
 

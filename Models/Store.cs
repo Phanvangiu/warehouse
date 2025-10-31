@@ -5,7 +5,6 @@ namespace warehouse.Models
   public class Store
   {
     public int Id { get; set; }
-
     [Required]
     public string Code { get; set; } = string.Empty;
 

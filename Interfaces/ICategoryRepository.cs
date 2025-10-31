@@ -32,7 +32,7 @@ namespace warehouse.Interfaces
     public async Task<CustomResult> GetCategories()
     {
       var categories = await _context.Categories.ToListAsync();
-      return new CustomResult(200, "list of categories", categories);
+      return new CustomResult(200, "Categories retrieved successfully", categories);
     }
 
     public async Task<CustomResult> GetCategory(int categoryId)
@@ -40,9 +40,9 @@ namespace warehouse.Interfaces
       var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
       if (category == null)
       {
-        return new CustomResult(404, "not found", null);
+        return new CustomResult(404, "Category not found.", null);
       }
-      return new CustomResult(200, "category", category);
+      return new CustomResult(200, "Category retrieved successfully.", category);
 
     }
     public async Task<CustomResult> CreateCategory(Category category)
@@ -51,7 +51,7 @@ namespace warehouse.Interfaces
       {
         _context.Categories.Add(category);
         await _context.SaveChangesAsync();
-        return new CustomResult(200, "create success", category);
+        return new CustomResult(200, "Category created successfully", category);
 
       }
       catch (Exception ex)
@@ -107,7 +107,7 @@ namespace warehouse.Interfaces
         _context.Categories.Update(categoryOld);
         await _context.SaveChangesAsync();
 
-        return new CustomResult(200, "Update success", categoryOld);
+        return new CustomResult(200, "Category updated successfully", categoryOld);
       }
       catch (Exception ex)
       {

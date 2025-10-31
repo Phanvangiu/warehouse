@@ -47,7 +47,7 @@ namespace warehouse.Interfaces
         return new CustomResult(200, "List empty", new List<Product>());
       }
 
-      return new CustomResult(200, "List of products", products);
+      return new CustomResult(200, "Products retrieved successfully", products);
     }
 
     public async Task<CustomResult> DeleteProduct(int id)
@@ -57,12 +57,12 @@ namespace warehouse.Interfaces
         var product = await _context.Products.SingleOrDefaultAsync(p => p.Id == id);
         if (product == null)
         {
-          return new CustomResult(404, "not found", null);
+          return new CustomResult(404, "Product not found", null);
         }
         product.IsActive = false;
         _context.Products.Update(product);
         await _context.SaveChangesAsync();
-        return new CustomResult(200, "success", product);
+        return new CustomResult(200, "Product deleted successfully", product);
       }
       catch (System.Exception)
       {
@@ -73,9 +73,16 @@ namespace warehouse.Interfaces
     {
       if (productCreateModel == null)
       {
-        return new CustomResult(400, "Product model is null", null);
+        return new CustomResult(400, "Invalid request: product data cannot be null.", null);
       }
-
+      if (string.IsNullOrWhiteSpace(productCreateModel.ProductName) ||
+       string.IsNullOrWhiteSpace(productCreateModel.Descripton) ||
+       string.IsNullOrWhiteSpace(productCreateModel.Unit) ||
+       productCreateModel.DefaultPrice <= 0
+       )
+      {
+        return new CustomResult(400, "Invalid request: productName, Code, Unit and DefaultPrice are required and must be valid.", null);
+      }
       var productNew = new Product
       {
         ProductName = productCreateModel.ProductName,
