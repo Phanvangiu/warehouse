@@ -13,6 +13,7 @@ namespace warehouse.RequestModels
     public string? Phone { get; set; }
 
     public string? Address { get; set; }
+    public DateTime? Dob { get; set; }
     public int RoleId { get; set; }
     public virtual Role? Role { get; set; }
     public IFormFile? Avatar { get; set; }
