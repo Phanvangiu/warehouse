@@ -2,8 +2,8 @@ namespace warehouse.RequestModels
 {
   public class ChangePasswordModel
   {
-    public string PreviousPassword { get; set; }
+    public required string PreviousPassword { get; set; }
 
-    public string NewPassword { get; set; }
+    public required string NewPassword { get; set; }
   }
 }

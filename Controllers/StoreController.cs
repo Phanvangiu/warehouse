@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
+using warehouse.RequestModels;
 
 namespace warehouse.Controllers
 {
@@ -16,6 +17,12 @@ namespace warehouse.Controllers
     public async Task<IActionResult> GetAll()
     {
       var customResult = await _unitOfWork.StoreRepository.GetStores();
+      return Ok(customResult);
+    }
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateStoreModel createStoreModel)
+    {
+      var customResult = await _unitOfWork.StoreRepository.CreateStore(createStoreModel);
       return Ok(customResult);
     }
   }

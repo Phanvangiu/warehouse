@@ -8,6 +8,6 @@ namespace warehouse.RequestModels
     public decimal DefaultPrice { get; set; }
     public string? Unit { get; set; }
     public bool IsActive { get; set; }
-    public ICollection<IFormFile> Images { get; set; }
+    public required ICollection<IFormFile> Images { get; set; }
   }
 }

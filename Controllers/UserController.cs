@@ -25,7 +25,7 @@ namespace warehouse.Controllers
 
       if (string.IsNullOrEmpty(email))
       {
-        return Ok(new CustomResult(401, "Invalid token or email not found in claims", null));
+        return Ok(new CustomResult(401, "Invalid token or email not found in claims", null!));
       }
       var customResult = await _unitOfWork.UserRepository.GetUser(email);
       return Ok(customResult);
@@ -35,14 +35,17 @@ namespace warehouse.Controllers
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordModel changePasswordModel)
     {
-      int userId;
-      string idClaim;
-      idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+      var idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id");
+
       if (idClaim == null)
       {
-        return Ok(new CustomResult(401, "Invalid token in claims", null));
+        return Ok(new CustomResult(401, "Invalid token: missing Id claim", null!));
       }
-      int.TryParse(idClaim, out userId);
+
+      if (!int.TryParse(idClaim.Value, out int userId))
+      {
+        return Ok(new CustomResult(401, "Invalid token: Id claim not valid", null!));
+      }
 
       var customResult = await _unitOfWork.UserRepository.ChangePassword(userId, changePasswordModel);
 
@@ -58,7 +61,7 @@ namespace warehouse.Controllers
 
       if (string.IsNullOrEmpty(email))
       {
-        return Ok(new CustomResult(404, "Please login before updating avatar", null));
+        return Ok(new CustomResult(404, "Please login before updating avatar", null!));
       }
 
       var customResult = await _unitOfWork.UserRepository.ChangeUserImage(email, request.Image);
