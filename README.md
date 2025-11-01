@@ -1,6 +1,6 @@
 # Warehouse Management System
 
-A warehouse management web application built with **.NET 8** and **Entity Framework Core**, providing full CRUD functionality for managing warehouse positions, stores, and users.
+A warehouse management web application built with **.NET 9** and **Entity Framework Core**, providing full CRUD functionality for managing warehouse positions, stores, and users.
 The project applies the **Repository Pattern + Unit of Work** architecture, ensuring clean code, easy scalability, and maintainability.
 
 ## 🚀 Features
