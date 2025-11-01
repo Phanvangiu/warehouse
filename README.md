@@ -38,13 +38,21 @@ The project applies the **Repository Pattern + Unit of Work** architecture, ensu
 warehouse/
 │
 ├── Controllers/ # API controllers
+
 ├── Data/ # DataContext và config database
+
 ├── Interfaces/ # Repository and Unit of Work interfaces
+
 ├── Models/ # Database mapping entities
+
 ├── Repositories/ # Logic processing and data manipulation
+
 ├── RequestModels/ # Model received from client
+
 ├── ReturnModels/ # CustomResult, DTO,...
+
 ├── Program.cs # Entry point of project
+
 ├── appsettings.json # Configure DB connection, JWT,...
 
 ## ⚙️ Getting Started
