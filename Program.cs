@@ -28,6 +28,7 @@ builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
 builder.Services.AddTransient<IProductRepository, ProductRepository>();
 builder.Services.AddTransient<IStoreRepository, StoreRepository>();
+builder.Services.AddTransient<IPositionRepository, PositionRepository>();
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
 );
@@ -37,7 +38,7 @@ builder.Services.AddCors(options =>
 {
   options.AddPolicy("myAppCors", policy =>
   {
-    policy.WithOrigins(allowOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    policy.WithOrigins(allowOrigin!).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
   });
 });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
