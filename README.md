@@ -19,7 +19,7 @@ The project applies the **Repository Pattern + Unit of Work** architecture, ensu
 - **API Testing:** Postman
 - **Version Control:** Git & GitHub
 
-## 🧩 Công nghệ sử dụng
+## 🧩 Technology used
 
 - **.NET 9 (ASP.NET Core Web API)**
 - **Entity Framework Core 9**
