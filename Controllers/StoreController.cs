@@ -20,7 +20,7 @@ namespace warehouse.Controllers
       return Ok(customResult);
     }
     [HttpPost]
-    public async Task<IActionResult> Create(CreateStoreModel createStoreModel)
+    public async Task<IActionResult> Create([FromForm] CreateStoreModel createStoreModel)
     {
       var customResult = await _unitOfWork.StoreRepository.CreateStore(createStoreModel);
       return Ok(customResult);

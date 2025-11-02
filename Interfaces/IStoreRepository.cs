@@ -26,7 +26,7 @@ namespace warehouse.Interfaces
         {
           return new CustomResult(200, "List empty", null!);
         }
-        return new CustomResult(200, "Stores retrieved successfully", null!);
+        return new CustomResult(200, "Stores retrieved successfully", list);
       }
       catch (Exception ex)
       {
@@ -50,7 +50,7 @@ namespace warehouse.Interfaces
         }
         var storeNew = new Store
         {
-          Address = createStoreModel.Address,
+          Address = createStoreModel.Code,
           Code = createStoreModel.Address,
           Phone = createStoreModel.Phone,
           StoreType = "Branch"
@@ -58,7 +58,7 @@ namespace warehouse.Interfaces
         _context.Stores.Add(storeNew);
         await _context.SaveChangesAsync();
 
-        return new CustomResult(200, "Store created successfully.", null!);
+        return new CustomResult(200, "Store created successfully.", storeNew);
       }
       catch (Exception ex)
       {
