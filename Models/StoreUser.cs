@@ -8,7 +8,7 @@ namespace warehouse.Models
     public int UserId { get; set; }
 
     public DateTime StartedDate { get; set; }
-    public DateTime? EndDate { get; set; } // null = đang làm
+    public DateTime? EndDate { get; set; }
 
     public virtual Store? Store { get; set; }
     public virtual User? User { get; set; }
