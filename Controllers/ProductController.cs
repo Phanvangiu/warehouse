@@ -31,5 +31,12 @@ namespace warehouse.Controllers
       var customResult = await _unitOfWork.ProductRepository.UpdateProduct(updateProductModel);
       return Ok(customResult);
     }
+    [HttpGet]
+    [Route("product-paging")]
+    public async Task<IActionResult> GetProducts([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] IEnumerable<int> categoryId, [FromQuery] string filterOption, [FromQuery] string searchValue = "")
+    {
+      var customPaging = await _unitOfWork.ProductRepository.GetPagingProducts(pageNumber, pageSize, categoryId, searchValue, filterOption);
+      return Ok(customPaging);
+    }
   }
 }

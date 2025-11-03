@@ -9,6 +9,7 @@ namespace warehouse.Interfaces
   public interface IProductRepository : IRepository<Product>
   {
     Task<CustomResult> GetProducts();
+    Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue, string filterOption);
     Task<CustomResult> DeleteProduct(int Id);
     Task<CustomResult> CreateProduct(CreateProductModel productCreateModel);
     Task<CustomResult> UpdateProduct(UpdateProductModel productUpdateModel);
@@ -57,6 +58,49 @@ namespace warehouse.Interfaces
       {
         return new CustomResult(500, $"An error occurred while creating store: {ex.Message}", null!);
       }
+    }
+    public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue, string filterOption)
+    {
+      IQueryable<Product> query;
+      query = _context.Products;
+      if (categoryId.Count() > 0)
+      {
+        query = query.Where(p => categoryId.Contains(p.CategoryId));
+      }
+      query = query.Where(p => p.ProductName.Contains(searchValue));
+
+      query = query.OrderByDescending(p => p.CreatedAt);
+
+      query = query.Include(p => p.Category).Include(p => p.ProductImages);
+
+      var total = query.Count();
+
+      query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+
+      var list = await query.ToListAsync();
+      var result = list
+                    .Select(p => new
+                    {
+                      p.Id,
+                      p.ProductName,
+                      p.DefaultPrice,
+                      CategoryName = p.Category!.Name,
+                      ImageUrls = p.ProductImages.Select(img => img.Image)
+                    });
+
+      var customPaging = new CustomPaging()
+      {
+        Status = 200,
+        Message = "OK",
+        CurrentPage = pageNumber,
+        TotalPages = (int)Math.Ceiling((double)total / pageSize),
+        PageSize = pageSize,
+        TotalCount = total,
+        Data = result
+      };
+
+      return customPaging;
     }
     public async Task<CustomResult> DeleteProduct(int productId)
     {
