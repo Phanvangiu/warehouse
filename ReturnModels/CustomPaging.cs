@@ -19,5 +19,6 @@ namespace warehouse.ReturnModels
     public bool HasNext => CurrentPage < TotalPages;
 
     public object? Data { get; set; }
+
   }
 }

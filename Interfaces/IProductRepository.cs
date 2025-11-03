@@ -59,49 +59,79 @@ namespace warehouse.Interfaces
         return new CustomResult(500, $"An error occurred while creating store: {ex.Message}", null!);
       }
     }
-    public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue, string filterOption)
+    public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int>? categoryIds, string? searchValue, string? filterOption)
     {
-      IQueryable<Product> query;
-      query = _context.Products;
-      if (categoryId.Count() > 0)
+      if (pageNumber <= 0) pageNumber = 1;
+      if (pageSize <= 0) pageSize = 10;
+
+      try
       {
-        query = query.Where(p => categoryId.Contains(p.CategoryId));
+        var query = _context.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.ProductImages)
+            .AsQueryable();
+
+        if (categoryIds != null && categoryIds.Any())
+        {
+          query = query.Where(p => categoryIds.Contains(p.CategoryId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+          string normalizedSearch = searchValue.Trim().ToLower();
+          query = query.Where(p => p.ProductName.ToLower().Contains(normalizedSearch));
+        }
+
+        query = filterOption switch
+        {
+          "newest" => query.OrderByDescending(p => p.CreatedAt),
+          "price_asc" => query.OrderBy(p => p.DefaultPrice),
+          "price_desc" => query.OrderByDescending(p => p.DefaultPrice),
+          _ => query.OrderByDescending(p => p.CreatedAt)
+        };
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new
+            {
+              p.Id,
+              p.ProductName,
+              p.DefaultPrice,
+              CategoryName = p.Category!.Name,
+              ImageUrls = p.ProductImages.Select(img => img.Image).ToList()
+            })
+            .ToListAsync();
+
+        return new CustomPaging
+        {
+          Status = 200,
+          Message = "Products retrieved successfully.",
+          CurrentPage = pageNumber,
+          TotalPages = (int)Math.Ceiling((double)total / pageSize),
+          PageSize = pageSize,
+          TotalCount = total,
+          Data = items
+        };
       }
-      query = query.Where(p => p.ProductName.Contains(searchValue));
-
-      query = query.OrderByDescending(p => p.CreatedAt);
-
-      query = query.Include(p => p.Category).Include(p => p.ProductImages);
-
-      var total = query.Count();
-
-      query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-
-
-      var list = await query.ToListAsync();
-      var result = list
-                    .Select(p => new
-                    {
-                      p.Id,
-                      p.ProductName,
-                      p.DefaultPrice,
-                      CategoryName = p.Category!.Name,
-                      ImageUrls = p.ProductImages.Select(img => img.Image)
-                    });
-
-      var customPaging = new CustomPaging()
+      catch (Exception ex)
       {
-        Status = 200,
-        Message = "OK",
-        CurrentPage = pageNumber,
-        TotalPages = (int)Math.Ceiling((double)total / pageSize),
-        PageSize = pageSize,
-        TotalCount = total,
-        Data = result
-      };
-
-      return customPaging;
+        return new CustomPaging
+        {
+          Status = 500,
+          Message = $"Internal Server Error: {ex.Message}",
+          CurrentPage = pageNumber,
+          TotalPages = 0,
+          PageSize = pageSize,
+          TotalCount = 0,
+          Data = null
+        };
+      }
     }
+
     public async Task<CustomResult> DeleteProduct(int productId)
     {
       try
