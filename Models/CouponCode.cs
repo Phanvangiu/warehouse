@@ -5,8 +5,7 @@ namespace warehouse.Models
   public class CouponCode
   {
     public int Id { get; set; }
-    [Required]
-    public string Code { get; set; } = string.Empty;
+    public required string Code { get; set; }
     public int PromotionId { get; set; }
     public int UsageLimit { get; set; }
     public int UseCount { get; set; }

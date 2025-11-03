@@ -13,11 +13,9 @@ namespace warehouse.Models
     public decimal DisCount { get; set; }
     public decimal Total { get; set; }
     public int Coupon { get; set; }
-    [Required]
     // PENDING, PAID, SHIPPED, CANCELLED, COMPLETED, REFUNDED
-    public string Status { get; set; } = string.Empty;
-    [Required]
-    public string PaymentMethod { get; set; } = string.Empty;
+    public required string Status { get; set; }
+    public required string PaymentMethod { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public virtual ICollection<OrderItem>? OrderItems { get; set; }

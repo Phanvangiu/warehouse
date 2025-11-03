@@ -5,8 +5,7 @@ namespace warehouse.Models
   public class Product
   {
     public int Id { get; set; }
-    [Required]
-    public string ProductName { get; set; } = string.Empty;
+    public required string ProductName { get; set; }
     public int CategoryId { get; set; }
     public string? Descripton { get; set; }
     public decimal DefaultPrice { get; set; }

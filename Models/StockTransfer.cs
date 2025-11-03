@@ -10,12 +10,10 @@ namespace warehouse.Models
     public int ProductId { get; set; }
     public string? BatchCode { get; set; }
     public int Quantity { get; set; }
-    [Required]
     // PENDING, COMPLETED, CANCELLED
-    public string Status { get; set; } = string.Empty;
-    [Required]
+    public required string Status { get; set; }
     // WAREHOUSE_TO_STORE, STORE_TO_STORE
-    public string StranferType { get; set; } = string.Empty;
+    public required string StranferType { get; set; }
     public string? Note { get; set; }
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
