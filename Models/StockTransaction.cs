@@ -6,9 +6,9 @@ namespace warehouse.Models
   {
     public int Id { get; set; }
     public int StoreStockId { get; set; }
-    [Required]
+
     // IMPORT, SALE, ADJUST, TRANSFER_OUT, TRANSFER_IN
-    public string Type { get; set; } = string.Empty;
+    public required string Type { get; set; }
     public int Quantity { get; set; }
     public string? Note { get; set; }
     public int CreatedBy { get; set; }

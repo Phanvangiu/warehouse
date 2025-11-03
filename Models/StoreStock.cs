@@ -7,8 +7,7 @@ namespace warehouse.Models
     public int Id { get; set; }
     public int StoreId { get; set; }
     public int ProductId { get; set; }
-    [Required]
-    public string BatchCode { get; set; } = string.Empty;
+    public required string BatchCode { get; set; }
     public int Quantity { get; set; }
     public int RemaininQuantity { get; set; }
     public decimal CostPrice { get; set; }
