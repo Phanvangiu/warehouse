@@ -27,6 +27,7 @@ namespace warehouse.Interfaces
     Task<CustomResult> ActivateEmployee(int userId);
     Task<CustomResult> DeactivateEmployee(int userId);
     Task<CustomResult> ChangeUserImage(string email, IFormFile image);
+    Task<CustomPaging> GetAllCustomer(int pageNumber, int pageSize, string? searchValue);
 
   }
   public class UserRepository : GenericRepository<User>, IUserRepository
@@ -337,6 +338,9 @@ namespace warehouse.Interfaces
     {
       try
       {
+        if (userId <= 0)
+          return new CustomResult(400, " Invalid request: Employee Id must be greater than 0 ", null!);
+
         var employee = await _context.Users.FindAsync(userId);
 
         if (employee is null)
@@ -359,6 +363,9 @@ namespace warehouse.Interfaces
     {
       try
       {
+        if (userId <= 0)
+          return new CustomResult(400, " Invalid request: Employee Id must be greater than 0 ", null!);
+
         var employee = await _context.Users.FindAsync(userId);
 
         if (employee is null)
@@ -424,6 +431,49 @@ namespace warehouse.Interfaces
       {
         return new CustomResult(500, $"An error occurred while updating the user image: {ex.Message}", null!);
       }
+    }
+    public async Task<CustomPaging> GetAllCustomer(int pageNumber, int pageSize, string? searchValue)
+    {
+      if (pageNumber <= 0) pageNumber = 1;
+      if (pageSize <= 0) pageSize = 10;
+      try
+      {
+        var query = _context.Users.AsNoTracking().Include(u => u.Orders).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+          string normalizedSearch = searchValue.Trim().ToLower();
+          query = query.Where(u => u.Name!.ToLower().Contains(normalizedSearch));
+        }
+        var total = await query.CountAsync();
+        var items = await query.Skip((pageNumber - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToListAsync();
+        return new CustomPaging
+        {
+          Status = 200,
+          Message = items.Any() ? "Users retrieved successfully." : "List empty",
+          CurrentPage = pageNumber,
+          PageSize = pageSize,
+          TotalCount = total,
+          TotalPages = (int)Math.Ceiling((double)total / pageSize),
+          Data = items
+        };
+
+      }
+      catch (Exception ex)
+      {
+        return new CustomPaging
+        {
+          Status = 500,
+          Message = $"An error occurred while retrieving users: {ex.Message}",
+          CurrentPage = 0,
+          PageSize = pageSize,
+          TotalCount = 0,
+          Data = null
+        };
+      }
+
     }
   }
 }

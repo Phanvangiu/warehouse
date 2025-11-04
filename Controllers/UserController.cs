@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using warehouse.Interfaces;
-using warehouse.Models;
 using warehouse.RequestModels;
 using warehouse.ReturnModels;
 
@@ -67,6 +66,26 @@ namespace warehouse.Controllers
       var customResult = await _unitOfWork.UserRepository.ChangeUserImage(email, request.Image);
       return Ok(customResult);
     }
-
+    [HttpGet]
+    [Route("get-customers-paging")]
+    public async Task<IActionResult> GetAllCustomer([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string? searchValue)
+    {
+      var customPaging = await _unitOfWork.UserRepository.GetAllCustomer(pageNumber, pageSize, searchValue);
+      return Ok(customPaging);
+    }
+    [HttpPut]
+    [Route("active-user")]
+    public async Task<IActionResult> ActivateEmployee([FromBody] int id)
+    {
+      var customResult = await _unitOfWork.UserRepository.ActivateEmployee(id);
+      return Ok(customResult);
+    }
+    [HttpPut]
+    [Route("deactive-user")]
+    public async Task<IActionResult> DeActivateEmployee([FromBody] int id)
+    {
+      var customResult = await _unitOfWork.UserRepository.DeactivateEmployee(id);
+      return Ok(customResult);
+    }
   }
 }
