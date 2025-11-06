@@ -10,7 +10,7 @@ namespace warehouse.Controllers
   public class StockTransferController : ControllerBase
   {
     private IUnitOfWork _unitOfwork;
-    public StockTransferController(UnitOfWork unitOfWork)
+    public StockTransferController(IUnitOfWork unitOfWork)
     {
       _unitOfwork = unitOfWork;
     }
@@ -20,5 +20,25 @@ namespace warehouse.Controllers
       var customResult = await _unitOfwork.StockTransferRepository.CreateStockTransfer(model);
       return Ok(customResult);
     }
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+      var customResult = await _unitOfwork.StockTransferRepository.GetStockTransfers();
+      return Ok(customResult);
+    }
+    [HttpPut("id")]
+    public async Task<IActionResult> GetById(int id)
+    {
+      var customResult = await _unitOfwork.StockTransferRepository.GetStockTransfer(id);
+      return Ok(customResult);
+    }
+    [HttpPut]
+    [Route("cancel/{id}")]
+    public async Task<IActionResult> Cancel(int id)
+    {
+      var customResult = await _unitOfwork.StockTransferRepository.Cancel(id);
+      return Ok(customResult);
+    }
+
   }
 }
