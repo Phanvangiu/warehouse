@@ -13,10 +13,8 @@ namespace warehouse.Interfaces
     Task<CustomResult> Cancel(int id);
     Task<CustomResult> GetStockTransfer(int id);
   }
-  public class StockTransferRepository : GenericRepository<StockTransfer>, IStockTransferRepository
+  public class StockTransferRepository(DataContext dataContext) : GenericRepository<StockTransfer>(dataContext), IStockTransferRepository
   {
-    public StockTransferRepository(DataContext dataContext) : base(dataContext)
-    { }
     private async Task<(Store? fromStore, Store? toStore, Product? product, CustomResult? error)> ValidateStockTransferModel(CreateStockTransferModel model)
     {
       if (model is null)

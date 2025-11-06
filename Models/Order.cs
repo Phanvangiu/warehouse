@@ -6,13 +6,12 @@ namespace warehouse.Models
   {
     public int Id { get; set; }
     public int UserId { get; set; }
+    public int EmployeeId { get; set; }
     public int StoreId { get; set; }
-    public int OrderItem { get; set; }
     public decimal Subtotal { get; set; }
-    public decimal ShippingFee { get; set; }
     public decimal DisCount { get; set; }
     public decimal Total { get; set; }
-    public int Coupon { get; set; }
+    public int? Coupon { get; set; }
     // PENDING, PAID, SHIPPED, CANCELLED, COMPLETED, REFUNDED
     public required string Status { get; set; }
     public required string PaymentMethod { get; set; }
