@@ -12,6 +12,8 @@ namespace warehouse.Interfaces
     IPositionRepository PositionRepository { get; }
     IStoreUserRepository StoreUserRepository { get; }
     IStoreStockRepository StoreStockRepository { get; }
+    IStockTransferRepository StockTransferRepository { get; }
+
     Task SaveChangesAsync();
   }
   public class UnitOfWork : IUnitOfWork
@@ -24,8 +26,9 @@ namespace warehouse.Interfaces
     public IPositionRepository PositionRepository { get; }
     public IStoreUserRepository StoreUserRepository { get; }
     public IStoreStockRepository StoreStockRepository { get; }
+    public IStockTransferRepository StockTransferRepository { get; }
 
-    public UnitOfWork(DataContext dataContext, IUserRepository userRepository, ICategoryRepository categoryRepository, IProductRepository productRepository, IStoreRepository storeRepository, IPositionRepository positionRepository, IStoreUserRepository storeUserRepository, IStoreStockRepository storeStockRepository)
+    public UnitOfWork(DataContext dataContext, IUserRepository userRepository, ICategoryRepository categoryRepository, IProductRepository productRepository, IStoreRepository storeRepository, IPositionRepository positionRepository, IStoreUserRepository storeUserRepository, IStoreStockRepository storeStockRepository, IStockTransferRepository stockTransferRepository)
     {
       _dataContext = dataContext;
       UserRepository = userRepository;
@@ -35,6 +38,7 @@ namespace warehouse.Interfaces
       PositionRepository = positionRepository;
       StoreUserRepository = storeUserRepository;
       StoreStockRepository = storeStockRepository;
+      StockTransferRepository = stockTransferRepository;
     }
     public void Dispose()
     {

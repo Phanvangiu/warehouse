@@ -31,6 +31,7 @@ builder.Services.AddTransient<IStoreRepository, StoreRepository>();
 builder.Services.AddTransient<IPositionRepository, PositionRepository>();
 builder.Services.AddTransient<IStoreUserRepository, StoreUserRepository>();
 builder.Services.AddTransient<IStoreStockRepository, StoreStockRepository>();
+builder.Services.AddTransient<IStockTransferRepository, StockTransferRepository>();
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
 );

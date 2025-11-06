@@ -99,6 +99,6 @@ namespace warehouse.Interfaces
         return new CustomResult(500, $"An error occurred while retrieving store stock: {ex.Message}", null!);
       }
     }
-
   }
+
 }

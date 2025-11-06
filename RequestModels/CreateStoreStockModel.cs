@@ -4,6 +4,7 @@ namespace warehouse.RequestModels
   {
     public int StoreId { get; set; }
     public int ProductId { get; set; }
+    public int ToStoreId { get; set; }
     public required string BatchCode { get; set; }
     public int Quantity { get; set; }
     public decimal CostPrice { get; set; }

@@ -1,9 +1,7 @@
-
-namespace warehouse.Models
+namespace warehouse.RequestModels
 {
-  public class StockTransfer
+  public class CreateStockTransferModel
   {
-    public int Id { get; set; }
     public int FromStoreId { get; set; }
     public int ToStoreId { get; set; }
     public int ProductId { get; set; }
@@ -14,9 +12,5 @@ namespace warehouse.Models
     // WAREHOUSE_TO_STORE, STORE_TO_STORE
     public required string StranferType { get; set; }
     public string? Note { get; set; }
-    public int CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime CompletedAt { get; set; }
-    public virtual Product? Product { get; set; }
   }
 }
