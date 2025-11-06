@@ -63,11 +63,13 @@ namespace warehouse.Interfaces
     {
       try
       {
+        if (id <= 0)
+          return new CustomResult(400, "Invalid ID. ID must be greater than 0.", null!);
+
         var position = await _context.Positions.FindAsync(id);
         if (position is null)
-        {
           return new CustomResult(200, "Position not found", null!);
-        }
+
         return new CustomResult(200, "Position retrieved successfully", position);
       }
       catch (Exception ex)

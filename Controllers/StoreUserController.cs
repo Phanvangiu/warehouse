@@ -33,8 +33,6 @@ namespace warehouse.Controllers
     [HttpPost("transfer")]
     public async Task<IActionResult> StranferStoreUser([FromForm] CreateStoreUserModel createStoreUserModel)
     {
-      if (!ModelState.IsValid)
-        return Ok(new CustomResult(400, "Invalid input format.", ModelState));
       var customResult = await _unitOfWork.StoreUserRepository.TransferStoreUser(createStoreUserModel);
       return Ok(customResult);
     }

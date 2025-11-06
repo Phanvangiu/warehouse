@@ -26,7 +26,7 @@ namespace warehouse.Controllers
       var customResult = await _unitOfwork.StockTransferRepository.GetStockTransfers();
       return Ok(customResult);
     }
-    [HttpPut("id")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
       var customResult = await _unitOfwork.StockTransferRepository.GetStockTransfer(id);

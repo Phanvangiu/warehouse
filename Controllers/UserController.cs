@@ -74,15 +74,15 @@ namespace warehouse.Controllers
       return Ok(customPaging);
     }
     [HttpPut]
-    [Route("active-user")]
-    public async Task<IActionResult> ActivateEmployee([FromBody] int id)
+    [Route("active-user/{id}")]
+    public async Task<IActionResult> ActivateEmployee(int id)
     {
       var customResult = await _unitOfWork.UserRepository.ActivateEmployee(id);
       return Ok(customResult);
     }
     [HttpPut]
-    [Route("deactive-user")]
-    public async Task<IActionResult> DeActivateEmployee([FromBody] int id)
+    [Route("deactive-user/{id}")]
+    public async Task<IActionResult> DeActivateEmployee(int id)
     {
       var customResult = await _unitOfWork.UserRepository.DeactivateEmployee(id);
       return Ok(customResult);

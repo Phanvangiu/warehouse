@@ -24,10 +24,6 @@ namespace warehouse.Controllers
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPosition(int id)
     {
-      if (id <= 0)
-      {
-        return Ok(new CustomResult(400, "Invalid ID. ID must be greater than 0.", null!));
-      }
       var customResult = await _unitOfWork.PositionRepository.GetPosition(id);
       return Ok(customResult);
     }
