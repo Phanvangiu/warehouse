@@ -150,6 +150,9 @@ namespace warehouse.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("StockId")
+                        .HasColumnType("int");
+
                     b.Property<int>("StoreId")
                         .HasColumnType("int");
 
@@ -674,6 +677,37 @@ namespace warehouse.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("StoreStocks");
+                });
+
+            modelBuilder.Entity("warehouse.Models.StoreStockItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
                     b.Property<decimal>("CostPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -697,21 +731,16 @@ namespace warehouse.Migrations
                     b.Property<int>("RemaininQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("StoreId")
+                    b.Property<int>("StoreStockId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("StoreId");
+                    b.HasIndex("StoreStockId");
 
-                    b.ToTable("StoreStocks");
+                    b.ToTable("StoreStockItems");
                 });
 
             modelBuilder.Entity("warehouse.Models.StoreUser", b =>
@@ -1063,21 +1092,32 @@ namespace warehouse.Migrations
 
             modelBuilder.Entity("warehouse.Models.StoreStock", b =>
                 {
-                    b.HasOne("warehouse.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("warehouse.Models.Store", "Store")
                         .WithMany("StoreStocks")
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("warehouse.Models.StoreStockItem", b =>
+                {
+                    b.HasOne("warehouse.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("warehouse.Models.StoreStock", "StoreStock")
+                        .WithMany("StoreStockItems")
+                        .HasForeignKey("StoreStockId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Product");
 
-                    b.Navigation("Store");
+                    b.Navigation("StoreStock");
                 });
 
             modelBuilder.Entity("warehouse.Models.StoreUser", b =>
@@ -1161,6 +1201,11 @@ namespace warehouse.Migrations
                     b.Navigation("StoreStocks");
 
                     b.Navigation("StoreUsers");
+                });
+
+            modelBuilder.Entity("warehouse.Models.StoreStock", b =>
+                {
+                    b.Navigation("StoreStockItems");
                 });
 
             modelBuilder.Entity("warehouse.Models.User", b =>

@@ -10,18 +10,18 @@ namespace warehouse.Controllers
   {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    [HttpPost]
-    public async Task<IActionResult> CreateOrder(CreateOrderModel model)
-    {
-      var customResult = await _unitOfWork.OrderRepository.CreateOrder(model);
-      return Ok(customResult);
-    }
+    // [HttpPost]
+    // public async Task<IActionResult> CreateOrder(CreateOrderModel model)
+    // {
+    //   var customResult = await _unitOfWork.OrderRepository.CreateOrder(model);
+    //   return Ok(customResult);
+    // }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] decimal min, [FromQuery] decimal max)
-    {
-      var customResult = await _unitOfWork.OrderRepository.GetAll(pageNumber, pageSize, min, max);
-      return Ok(customResult);
-    }
+    // [HttpGet]
+    // public async Task<IActionResult> GetAll([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] decimal min, [FromQuery] decimal max)
+    // {
+    //   var customResult = await _unitOfWork.OrderRepository.GetAll(pageNumber, pageSize, min, max);
+    //   return Ok(customResult);
+    // }
   }
 }

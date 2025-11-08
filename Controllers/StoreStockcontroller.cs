@@ -14,23 +14,23 @@ namespace warehouse.Controllers
       _unitOfWork = unitOfWork;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-      var customResult = await _unitOfWork.StoreStockRepository.GetStoreStocks();
-      return Ok(customResult);
-    }
-    [HttpPost]
-    public async Task<IActionResult> Create([FromForm] CreateStoreStockModel model)
-    {
-      var customerResult = await _unitOfWork.StoreStockRepository.CreateStoreStock(model);
-      return Ok(customerResult);
-    }
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-      var customerResult = await _unitOfWork.StoreStockRepository.GetStoreStock(id);
-      return Ok(customerResult);
-    }
+    // [HttpGet]
+    // public async Task<IActionResult> GetAll()
+    // {
+    //   var customResult = await _unitOfWork.StoreStockRepository.GetStoreStocks();
+    //   return Ok(customResult);
+    // }
+    // [HttpPost]
+    // public async Task<IActionResult> Create([FromForm] CreateStoreStockModel model)
+    // {
+    //   var customerResult = await _unitOfWork.StoreStockRepository.CreateStoreStock(model);
+    //   return Ok(customerResult);
+    // }
+    // [HttpGet("{id}")]
+    // public async Task<IActionResult> GetById(int id)
+    // {
+    //   var customerResult = await _unitOfWork.StoreStockRepository.GetStoreStock(id);
+    //   return Ok(customerResult);
+    // }
   }
 }

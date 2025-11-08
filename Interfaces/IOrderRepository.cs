@@ -12,6 +12,7 @@ namespace warehouse.Interfaces
   {
     Task<CustomPaging> GetAll(int pageNumber, int pageSize, decimal? min, decimal? max);
     Task<CustomResult> CreateOrder(CreateOrderModel model);
+    Task<CustomResult> CancelOrder(int orderId, int userId, Collection<int> orderItems);
   }
   public class OrderRepository(DataContext dataContext) : GenericRepository<Order>(dataContext), IOrderRepository
   {
@@ -81,7 +82,6 @@ namespace warehouse.Interfaces
         };
       }
     }
-
     private async Task<(IReadOnlyCollection<Product>? Products, CustomResult? Error)> ValidateProductsAsync(IReadOnlyCollection<CreateOrderItemModel> items)
     {
       if (items is null || items.Count == 0)
@@ -101,6 +101,7 @@ namespace warehouse.Interfaces
 
       return (products.AsReadOnly(), null);
     }
+
     private async Task<(User? user, User? employee, Store? store, CustomResult? error)> ValidateUserAndStoreAsync(int customerId, int employeeId, int storeId)
     {
       if (customerId <= 0 || employeeId <= 0 || storeId <= 1)
@@ -150,7 +151,8 @@ namespace warehouse.Interfaces
           Coupon = model.Coupon,
           Status = model.Status,
           PaymentMethod = model.PaymentMethod,
-          CreatedAt = DateTime.UtcNow
+          CreatedAt = DateTime.UtcNow,
+          UpdatedAt = DateTime.UtcNow
         };
 
         _context.Orders.Add(order);
@@ -159,8 +161,8 @@ namespace warehouse.Interfaces
         foreach (var item in model.OrderItems)
         {
           var product = products!.First(p => p.Id == item.ProductId);
-          var stockProducts = await _context.StoreStocks
-                                    .Where(s => s.StoreId == model.StoreId && s.ProductId == item.ProductId && s.Quantity > 0)
+          var stockProducts = await _context.StoreStockItems
+                                    .Where(s => s.StoreStockId == model.StoreId && s.ProductId == item.ProductId && s.Quantity > 0)
                                     .OrderBy(s => s.CreatedAt)
                                     .ToListAsync();
 
@@ -175,7 +177,7 @@ namespace warehouse.Interfaces
             stock.Quantity -= deduction;
             remainingQty -= deduction;
 
-            _context.StoreStocks.Update(stock);
+            _context.StoreStockItems.Update(stock);
           }
 
           if (remainingQty > 0)
@@ -209,5 +211,66 @@ namespace warehouse.Interfaces
         return new CustomResult(200, $"An error occurred while creatting order: {ex.Message}", null!);
       }
     }
+    public async Task<CustomResult> CancelOrder(int orderId, int userId, Collection<int> orderItems)
+    {
+      try
+      {
+        if (orderId <= 0 || userId <= 0)
+          return new CustomResult(400, "Invalid request: OrderId and UserId must be greater than 0!", null!);
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+          return new CustomResult(404, "User not found", null!);
+
+        var order = await _context.Orders
+                          .Include(o => o.OrderItems)
+                          .FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order is null)
+          return new CustomResult(404, "Order not found", null!);
+
+        if (order.UserId != user.Id)
+          return new CustomResult(403, "Forbidden: You are not allowed to cancel this order", null!);
+
+        var status = order.Status.ToLower();
+        if (status is "shipping" or "cancelled" or "refunded")
+          return new CustomResult(400, $"Order cannot be cancelled because status is: {order.Status}", null!);
+
+        if (orderItems is null || orderItems.Count == 0)
+          return new CustomResult(400, "Invalid request: orderItems must not be empty", null!);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        order.Status = "cancelled";
+        order.UpdatedAt = DateTime.UtcNow;
+        _context.Orders.Update(order);
+
+        foreach (var itemId in orderItems)
+        {
+          var item = order.OrderItems!.FirstOrDefault(x => x.Id == itemId);
+          if (item == null) continue;
+
+          var stock = await _context.StoreStockItems
+                            .FirstOrDefaultAsync(s => s.StoreStockId == order.StoreId && s.ProductId == item.ProductId && s.Id == order.StoreStockItemId);
+
+          if (stock != null)
+          {
+            stock.Quantity += item.Quantity; // hoàn hàng lại
+            _context.StoreStockItems.Update(stock);
+          }
+        }
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        return new CustomResult(200, "Order cancelled successfully", order);
+      }
+      catch (Exception ex)
+      {
+        return new CustomResult(500, $"An error occurred while cancelling the order: {ex.Message}", null!);
+      }
+    }
+
+
   }
+
 }

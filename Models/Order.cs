@@ -10,9 +10,10 @@ namespace warehouse.Models
     public int StoreId { get; set; }
     public decimal Subtotal { get; set; }
     public decimal DisCount { get; set; }
+    public int StoreStockItemId { get; set; }
     public decimal Total { get; set; }
     public int? Coupon { get; set; }
-    // PENDING, PAID, SHIPPED, CANCELLED, COMPLETED, REFUNDED
+    // DPENDING, SHIPPING, CANCELLED, COMPLETED, REFUNED
     public required string Status { get; set; }
     public required string PaymentMethod { get; set; }
     public DateTime CreatedAt { get; set; }

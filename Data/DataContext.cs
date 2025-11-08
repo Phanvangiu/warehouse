@@ -24,6 +24,7 @@ namespace warehouse.Data
     public DbSet<StockTransaction> StockTransactions { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<StoreStock> StoreStocks { get; set; }
+    public DbSet<StoreStockItem> StoreStockItems { get; set; }
     public DbSet<StoreUser> StoreUsers { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
@@ -96,11 +97,18 @@ namespace warehouse.Data
         .HasForeignKey(ss => ss.StoreId)
         .OnDelete(DeleteBehavior.Restrict);
 
-      modelBuilder.Entity<StoreStock>()
+      modelBuilder.Entity<StoreStockItem>()
+        .HasOne(ss => ss.StoreStock)
+        .WithMany(ss => ss.StoreStockItems)
+        .HasForeignKey(ss => ss.StoreStockId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+      modelBuilder.Entity<StoreStockItem>()
         .HasOne(ss => ss.Product)
         .WithMany()
         .HasForeignKey(ss => ss.ProductId)
         .OnDelete(DeleteBehavior.Restrict);
+
       modelBuilder.Entity<StockTransaction>()
         .HasOne(st => st.StoreStock)
         .WithMany()
@@ -191,6 +199,10 @@ namespace warehouse.Data
      {
        option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
        option.Property(e => e.UpdatedAt).HasDefaultValueSql("GETDATE()");
+     });
+      modelBuilder.Entity<StoreStockItem>(option =>
+     {
+       option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
      });
       modelBuilder.Entity<User>(option =>
       {

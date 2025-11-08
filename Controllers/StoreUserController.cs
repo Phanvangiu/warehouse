@@ -24,8 +24,6 @@ namespace warehouse.Controllers
     [HttpPost]
     public async Task<IActionResult> Create([FromForm] CreateStoreUserModel createStoreUserModel)
     {
-      if (!ModelState.IsValid)
-        return Ok(new CustomResult(400, "Invalid input format.", ModelState));
       var customResult = await _unitOfWork.StoreUserRepository.CreateStoreUser(createStoreUserModel);
       return Ok(customResult);
     }
